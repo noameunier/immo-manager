@@ -103,6 +103,10 @@ jobs:
           done < "${RUNNER_TEMP}/diag.txt"
 
       - name: Build API et web
+        # Un NODE_ENV hérité (test, development) fausse le build Next.js :
+        # le build doit toujours être produit en mode production.
+        env:
+          NODE_ENV: production
         run: |
           pnpm --filter @immo/api build
           pnpm --filter @immo/web build
@@ -134,7 +138,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://immo:immo_ci_only@127.0.0.1:5432/immo_dev?schema=public
       APP_SECRET: ci-secret-0123456789abcdef0123456789abcdef
-      NODE_ENV: development
+      # NODE_ENV n'est volontairement pas défini ici : le build exige
+      # production, l'API du parcours exige développement (cookie non Secure).
+      # Chaque étape (et chaque serveur Playwright) fixe la valeur adéquate.
       API_PORT: '4100'
       API_HOST: '127.0.0.1'
       WEB_ORIGIN: http://localhost:3100
@@ -165,9 +171,12 @@ jobs:
         run: pnpm --filter @immo/api exec prisma migrate deploy
 
       - name: Construire l'API et le web
+        env:
+          NODE_ENV: production
         run: |
-          pnpm --filter @immo/api build
-          pnpm --filter @immo/web build
+          set -o pipefail
+          pnpm --filter @immo/api build 2>&1 | tee "${RUNNER_TEMP}/build-api.log"
+          pnpm --filter @immo/web build 2>&1 | tee "${RUNNER_TEMP}/build-web.log"
 
       - name: Installer Chromium
         run: pnpm --filter @immo/web exec playwright install --with-deps chromium
@@ -178,15 +187,17 @@ jobs:
           pnpm --filter @immo/web test:e2e 2>&1 | tee "${RUNNER_TEMP}/e2e.log"
 
       # Comme pour les tests API : les annotations sont lisibles publiquement.
-      - name: Publier le diagnostic Playwright
+      - name: Publier le diagnostic du parcours
         if: failure()
         run: |
-          log="${RUNNER_TEMP}/e2e.log"
-          [ -f "$log" ] || exit 0
           {
-            grep -E "Error:|Timed out|failed|✘|expect\(" "$log" || true
-            tail -15 "$log"
-          } | tail -25 > "${RUNNER_TEMP}/diag-e2e.txt"
+            for f in "${RUNNER_TEMP}"/build-api.log "${RUNNER_TEMP}"/build-web.log "${RUNNER_TEMP}"/e2e.log; do
+              [ -f "$f" ] || continue
+              echo "--- $(basename "$f") ---"
+              grep -E "Error|error|⨯|✘|Timed out|failed|TypeError|Cannot" "$f" | tail -12 || true
+              tail -5 "$f"
+            done
+          } | tail -40 > "${RUNNER_TEMP}/diag-e2e.txt"
           while IFS= read -r line; do
             line="${line//'%'/'%25'}"
             line="${line//$'\r'/}"

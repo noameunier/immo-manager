@@ -235,6 +235,13 @@ pnpm backup                                  # sauvegarde chiffrée
   le même fichier (`@apply btn` échoue). Répéter les utilitaires.
 - **Playwright** : utiliser `http://localhost:3100` (et non `127.0.0.1`) pour que
   l'origine corresponde à `WEB_ORIGIN` et que le contrôle CSRF passe.
+- **NODE_ENV et Next.js** : `next build` doit toujours tourner avec
+  `NODE_ENV=production`. Hérité en `development`, React utilise son runtime de
+  développement et le prérendu de `/_global-error` échoue
+  (`Cannot read properties of null (reading 'useContext')`). À l'inverse,
+  `next start` exige `production` et l'API du parcours E2E exige `development`
+  (cookie sans `Secure` sur http) : les deux serveurs Playwright fixent donc
+  explicitement leur `NODE_ENV`.
 - **Express** doit rester une dépendance directe de l'API (pnpm strict).
 - **Ports** : 3100 web, 4100 API, 4200 API de test, 3200 web préprod,
   5434 base dev, 5435 base préprod, 1026/8026 Mailpit. Ne jamais utiliser

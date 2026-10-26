@@ -26,14 +26,19 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'pnpm --filter @immo/api start',
+      // NODE_ENV explicite : le parcours s'exécute sur http, donc l'API doit
+      // rester en développement (cookie sans drapeau Secure).
+      command: 'NODE_ENV=development pnpm --filter @immo/api start',
       cwd: '../..',
       url: 'http://127.0.0.1:4100/health',
       reuseExistingServer: true,
       timeout: 120_000,
     },
     {
-      command: `pnpm --filter @immo/web exec next start --hostname 127.0.0.1 --port ${WEB_PORT}`,
+      // `next start` sert un build de production : NODE_ENV doit être
+      // production, sinon React utilise le runtime de développement et le
+      // rendu échoue (`useContext` sur null).
+      command: `NODE_ENV=production pnpm --filter @immo/web exec next start --hostname 127.0.0.1 --port ${WEB_PORT}`,
       cwd: '../..',
       // Le serveur écoute uniquement en IPv4 ; on évite une résolution ::1.
       url: `http://127.0.0.1:${WEB_PORT}/connexion`,
