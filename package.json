@@ -21,6 +21,10 @@
     "format:check": "prettier --check .",
     "db:up": "docker compose -f infra/docker/docker-compose.dev.yml up -d --wait",
     "db:down": "docker compose -f infra/docker/docker-compose.dev.yml down",
+    "db:staging:up": "docker compose -f infra/docker/docker-compose.staging.yml up -d --wait",
+    "db:staging:down": "docker compose -f infra/docker/docker-compose.staging.yml down",
+    "backup": "bash infra/backup/backup-immo.sh --env staging",
+    "services:install": "bash infra/bootstrap/install-user-services.sh all",
     "db:reset": "bash scripts/db-reset.sh",
     "db:seed": "pnpm --filter @immo/api db:seed",
     "db:test": "bash scripts/db-test-setup.sh"

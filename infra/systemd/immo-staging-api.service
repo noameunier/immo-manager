@@ -1,0 +1,24 @@
+[Unit]
+Description=Immo Manager — API (préproduction)
+Documentation=file:///home/dev/repos/immo-manager/docs/ARCHITECTURE.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/dev/repos/immo-manager/apps/api
+# Configuration de préproduction : JAMAIS dans le dépôt.
+EnvironmentFile=/home/dev/.secrets/immo-manager/staging-api.env
+ExecStart=/home/dev/.local/opt/node/bin/node /home/dev/repos/immo-manager/apps/api/dist/main.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/dev/repos/immo-manager/apps/api
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

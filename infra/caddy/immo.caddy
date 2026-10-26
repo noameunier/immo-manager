@@ -1,0 +1,88 @@
+# ---------------------------------------------------------------------------
+# Immo Manager — vhosts Caddy
+# ---------------------------------------------------------------------------
+# Ce fichier est la source de vérité versionnée. Il est lié symboliquement dans
+# /etc/caddy/immo.caddy par infra/bootstrap/install-caddy-import.sh (action
+# humaine unique, avec sudo). Ensuite, une mise à jour du fichier dans le dépôt
+# ne demande plus qu'un rechargement :
+#
+#   sudo systemctl reload caddy
+#
+# Caddy valide la configuration avant tout rechargement ; un rechargement
+# invalide laisse l'ancienne configuration active.
+#
+# Ne jamais exposer les ports applicatifs sur 0.0.0.0 : les reverse_proxy
+# ci-dessous pointent exclusivement vers 127.0.0.1.
+# ---------------------------------------------------------------------------
+
+# --- Préproduction web : page + API same-origin via /api/* -------------------
+staging-immo.noameunier.fr {
+	encode zstd gzip
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:4200
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3200
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# --- Préproduction API mobile (jeton Bearer) -------------------------------
+api-staging-immo.noameunier.fr {
+	encode zstd gzip
+
+	handle {
+		reverse_proxy 127.0.0.1:4200
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+	}
+}
+
+# --- Développement web (VPS) ------------------------------------------------
+# Ces deux vhosts peuvent être commentés si l'environnement de développement
+# n'a pas à être joignable depuis Internet.
+immo.noameunier.fr {
+	encode zstd gzip
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:4100
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3100
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# --- Développement API mobile ----------------------------------------------
+api-immo.noameunier.fr {
+	encode zstd gzip
+
+	handle {
+		reverse_proxy 127.0.0.1:4100
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+	}
+}

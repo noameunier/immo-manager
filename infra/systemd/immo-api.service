@@ -1,0 +1,25 @@
+[Unit]
+Description=Immo Manager — API (développement)
+Documentation=file:///home/dev/repos/immo-manager/docs/ARCHITECTURE.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/dev/repos/immo-manager/apps/api
+# Le fichier apps/api/.env (chmod 600, ignoré par git) porte la configuration.
+EnvironmentFile=-/home/dev/repos/immo-manager/apps/api/.env
+ExecStart=/home/dev/.local/opt/node/bin/node /home/dev/repos/immo-manager/apps/api/dist/main.js
+Restart=on-failure
+RestartSec=5
+# Durcissement : le service n'a besoin que de lire le dépôt et d'écrire ses logs.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/dev/repos/immo-manager/apps/api
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
