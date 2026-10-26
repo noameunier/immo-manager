@@ -33,7 +33,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `pnpm --filter @immo/web start --port ${WEB_PORT}`,
+      command: `pnpm --filter @immo/web exec next start --hostname 127.0.0.1 --port ${WEB_PORT}`,
       cwd: '../..',
       url: `http://localhost:${WEB_PORT}/connexion`,
       reuseExistingServer: true,
