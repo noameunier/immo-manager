@@ -37,6 +37,15 @@ jobs:
           --health-timeout 3s
           --health-retries 20
 
+      # Les tests d'intégration vérifient la réception réelle des emails
+      # (vérification d'adresse, réinitialisation) en interrogeant l'API HTTP de
+      # Mailpit. Sans ce service, ces tests échouent faute de transporteur.
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1026:1025
+          - 8026:8025
+
     env:
       DATABASE_URL: postgresql://immo:immo_ci_only@127.0.0.1:5432/immo_test?schema=public
       TEST_DATABASE_URL: postgresql://immo:immo_ci_only@127.0.0.1:5432/immo_test?schema=public
@@ -68,7 +77,30 @@ jobs:
         run: pnpm typecheck
 
       - name: Tests d'intégration API
-        run: pnpm --filter @immo/api test
+        run: |
+          set -o pipefail
+          pnpm --filter @immo/api test 2>&1 | tee "${RUNNER_TEMP}/api-tests.log"
+
+      # Les annotations d'un job sont lisibles publiquement via l'API GitHub,
+      # contrairement aux journaux qui exigent une authentification. On publie
+      # donc les lignes d'échec essentielles en annotations.
+      - name: Publier le diagnostic des tests
+        if: failure()
+        run: |
+          log="${RUNNER_TEMP}/api-tests.log"
+          [ -f "$log" ] || exit 0
+          {
+            grep -E "FAIL |AssertionError|EADDRINUSE|ECONNREFUSED|ENOENT|P1001|Command failed|Tests +[0-9]" "$log" || true
+            awk '/Échec de la préparation/{flag=1} flag{print; n++} n>=4{exit}' "$log"
+          } | tail -30 > "${RUNNER_TEMP}/diag.txt"
+          if [ ! -s "${RUNNER_TEMP}/diag.txt" ]; then
+            tail -15 "$log" > "${RUNNER_TEMP}/diag.txt"
+          fi
+          while IFS= read -r line; do
+            line="${line//'%'/'%25'}"
+            line="${line//$'\r'/}"
+            echo "::error::${line}"
+          done < "${RUNNER_TEMP}/diag.txt"
 
       - name: Build API et web
         run: |
@@ -141,7 +173,25 @@ jobs:
         run: pnpm --filter @immo/web exec playwright install --with-deps chromium
 
       - name: Lancer le parcours Playwright
-        run: pnpm --filter @immo/web test:e2e
+        run: |
+          set -o pipefail
+          pnpm --filter @immo/web test:e2e 2>&1 | tee "${RUNNER_TEMP}/e2e.log"
+
+      # Comme pour les tests API : les annotations sont lisibles publiquement.
+      - name: Publier le diagnostic Playwright
+        if: failure()
+        run: |
+          log="${RUNNER_TEMP}/e2e.log"
+          [ -f "$log" ] || exit 0
+          {
+            grep -E "Error:|Timed out|failed|✘|expect\(" "$log" || true
+            tail -15 "$log"
+          } | tail -25 > "${RUNNER_TEMP}/diag-e2e.txt"
+          while IFS= read -r line; do
+            line="${line//'%'/'%25'}"
+            line="${line//$'\r'/}"
+            echo "::error::${line}"
+          done < "${RUNNER_TEMP}/diag-e2e.txt"
 
       - name: Conserver le rapport en cas d'échec
         if: failure()
