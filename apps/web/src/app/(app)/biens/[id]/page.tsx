@@ -106,7 +106,9 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         {property.description ? (
           <div className="mt-4 border-t border-slate-100 pt-4">
             <p className="text-xs text-slate-500">Description</p>
-            <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{property.description}</p>
+            <p className="mt-1 whitespace-pre-line text-sm text-slate-700">
+              {property.description}
+            </p>
           </div>
         ) : null}
       </section>
@@ -118,7 +120,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         {property.building && !property.addressLine1 ? (
           <p className="mt-3 text-sm text-slate-600">
             Le bien est situé à l’adresse de l’immeuble{' '}
-            <Link href={`/immeubles/${property.building.id}`} className="text-brand-700 hover:underline">
+            <Link
+              href={`/immeubles/${property.building.id}`}
+              className="text-brand-700 hover:underline"
+            >
               {property.building.name}
             </Link>{' '}
             ({property.building.city}).

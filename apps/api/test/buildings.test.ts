@@ -1,32 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import {
-  api,
-  createBuilding,
-  createEntity,
-  createProperty,
-  registerUser,
-} from './helpers';
+import { api, createBuilding, createEntity, createProperty, registerUser } from './helpers';
 
 describe('Immeubles', () => {
   it('crée un immeuble rattaché à une entité du propriétaire', async () => {
     const user = await registerUser();
     const entity = await createEntity(user.token);
 
-    const response = await api<{ id: string; name: string; entity: { id: string } }>(
-      '/buildings',
-      {
-        method: 'POST',
-        token: user.token,
-        body: {
-          entityId: entity.id,
-          name: 'Immeuble Victor Hugo',
-          addressLine1: '25 rue Victor Hugo',
-          postalCode: '69002',
-          city: 'Lyon',
-          constructionYear: 1900,
-        },
+    const response = await api<{ id: string; name: string; entity: { id: string } }>('/buildings', {
+      method: 'POST',
+      token: user.token,
+      body: {
+        entityId: entity.id,
+        name: 'Immeuble Victor Hugo',
+        addressLine1: '25 rue Victor Hugo',
+        postalCode: '69002',
+        city: 'Lyon',
+        constructionYear: 1900,
       },
-    );
+    });
 
     expect(response.status).toBe(201);
     expect(response.data.entity.id).toBe(entity.id);

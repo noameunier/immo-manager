@@ -25,10 +25,9 @@ export function ArchiveButton({ resource, id, archived, label }: Props) {
     setPending(true);
     setError(null);
     try {
-      await apiFetch(
-        archived ? `/${resource}/${id}/restore` : `/${resource}/${id}`,
-        { method: archived ? 'POST' : 'DELETE' },
-      );
+      await apiFetch(archived ? `/${resource}/${id}/restore` : `/${resource}/${id}`, {
+        method: archived ? 'POST' : 'DELETE',
+      });
       router.refresh();
     } catch (caught) {
       setError(errorMessage(caught));

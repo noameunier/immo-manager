@@ -54,8 +54,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         const record = payload as Record<string, unknown>;
         body = {
           error: {
-            code:
-              typeof record.code === 'string' ? record.code : httpCodeToErrorCode(status),
+            code: typeof record.code === 'string' ? record.code : httpCodeToErrorCode(status),
             message:
               typeof record.message === 'string'
                 ? record.message
@@ -69,7 +68,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else {
       logger.error(
         {
-          err: exception instanceof Error ? { message: exception.message, stack: exception.stack } : exception,
+          err:
+            exception instanceof Error
+              ? { message: exception.message, stack: exception.stack }
+              : exception,
           path: request.url,
           requestId: request.requestId,
         },
@@ -78,10 +80,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (status >= 500) {
-      logger.error(
-        { path: request.url, status, requestId: request.requestId },
-        'Erreur serveur',
-      );
+      logger.error({ path: request.url, status, requestId: request.requestId }, 'Erreur serveur');
     }
 
     response.status(status).json(body);

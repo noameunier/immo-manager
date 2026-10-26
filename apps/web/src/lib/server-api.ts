@@ -50,5 +50,7 @@ export async function getSession(): Promise<SessionInfo | null> {
 }
 
 export function hasSessionCookie(cookieHeader: string | null): boolean {
-  return Boolean(cookieHeader?.split(';').some((part) => part.trim().startsWith(`${SESSION_COOKIE_NAME}=`)));
+  return Boolean(
+    cookieHeader?.split(';').some((part) => part.trim().startsWith(`${SESSION_COOKIE_NAME}=`)),
+  );
 }

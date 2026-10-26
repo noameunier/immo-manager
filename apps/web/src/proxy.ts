@@ -2,13 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? 'immo_session';
 
-const PROTECTED_PREFIXES = [
-  '/tableau-de-bord',
-  '/entites',
-  '/immeubles',
-  '/biens',
-  '/profil',
-];
+const PROTECTED_PREFIXES = ['/tableau-de-bord', '/entites', '/immeubles', '/biens', '/profil'];
 
 const AUTH_PAGES = ['/connexion', '/inscription'];
 

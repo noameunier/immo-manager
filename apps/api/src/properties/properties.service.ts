@@ -77,8 +77,7 @@ export class PropertiesService {
     if (!input.buildingId && (!input.postalCode || !input.city)) {
       throw new BadRequestException({
         code: 'ADDRESS_REQUIRED',
-        message:
-          'Un bien indépendant doit avoir une adresse complète (code postal et ville).',
+        message: 'Un bien indépendant doit avoir une adresse complète (code postal et ville).',
       });
     }
 
@@ -158,19 +157,13 @@ export class PropertiesService {
       if (!nextPostalCode || !nextCity) {
         throw new BadRequestException({
           code: 'ADDRESS_REQUIRED',
-          message:
-            'Un bien indépendant doit avoir une adresse complète (code postal et ville).',
+          message: 'Un bien indépendant doit avoir une adresse complète (code postal et ville).',
         });
       }
     }
 
     if (input.lotNumber !== undefined) {
-      await this.assertLotNumberAvailable(
-        ownerId,
-        nextBuildingId,
-        input.lotNumber ?? null,
-        id,
-      );
+      await this.assertLotNumberAvailable(ownerId, nextBuildingId, input.lotNumber ?? null, id);
     }
 
     try {
@@ -189,15 +182,9 @@ export class PropertiesService {
           ...(input.occupancyStatus !== undefined
             ? { occupancyStatus: input.occupancyStatus }
             : {}),
-          ...(input.description !== undefined
-            ? { description: input.description ?? null }
-            : {}),
-          ...(input.addressLine1 !== undefined
-            ? { addressLine1: input.addressLine1 ?? null }
-            : {}),
-          ...(input.addressLine2 !== undefined
-            ? { addressLine2: input.addressLine2 ?? null }
-            : {}),
+          ...(input.description !== undefined ? { description: input.description ?? null } : {}),
+          ...(input.addressLine1 !== undefined ? { addressLine1: input.addressLine1 ?? null } : {}),
+          ...(input.addressLine2 !== undefined ? { addressLine2: input.addressLine2 ?? null } : {}),
           ...(input.postalCode !== undefined ? { postalCode: input.postalCode ?? null } : {}),
           ...(input.city !== undefined ? { city: input.city ?? null } : {}),
           ...(input.country !== undefined ? { country: input.country } : {}),

@@ -50,7 +50,7 @@ export class CsrfMiddleware implements NestMiddleware {
       response.status(403).json({
         error: {
           code: 'CSRF_REJECTED',
-          message: "Origine de la requête non autorisée.",
+          message: 'Origine de la requête non autorisée.',
         },
       });
       return;

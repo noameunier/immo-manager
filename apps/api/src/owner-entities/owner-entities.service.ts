@@ -113,12 +113,8 @@ export class OwnerEntitiesService {
         ...(input.vatNumber !== undefined ? { vatNumber: input.vatNumber ?? null } : {}),
         ...(input.email !== undefined ? { email: input.email ?? null } : {}),
         ...(input.phone !== undefined ? { phone: input.phone ?? null } : {}),
-        ...(input.addressLine1 !== undefined
-          ? { addressLine1: input.addressLine1 ?? null }
-          : {}),
-        ...(input.addressLine2 !== undefined
-          ? { addressLine2: input.addressLine2 ?? null }
-          : {}),
+        ...(input.addressLine1 !== undefined ? { addressLine1: input.addressLine1 ?? null } : {}),
+        ...(input.addressLine2 !== undefined ? { addressLine2: input.addressLine2 ?? null } : {}),
         ...(input.postalCode !== undefined ? { postalCode: input.postalCode ?? null } : {}),
         ...(input.city !== undefined ? { city: input.city ?? null } : {}),
         ...(input.country !== undefined ? { country: input.country } : {}),

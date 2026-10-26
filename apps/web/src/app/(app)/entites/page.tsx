@@ -70,9 +70,7 @@ export default async function EntitiesPage({
 
       {entities.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="text-sm text-slate-600">
-            Aucune entité ne correspond à votre recherche.
-          </p>
+          <p className="text-sm text-slate-600">Aucune entité ne correspond à votre recherche.</p>
           <Link href="/entites/nouvelle" className="btn-primary mt-4">
             Créer ma première entité
           </Link>
@@ -91,7 +89,8 @@ export default async function EntitiesPage({
                 </Link>
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                {[entity.city, entity.postalCode].filter(Boolean).join(' · ') || 'Adresse non renseignée'}
+                {[entity.city, entity.postalCode].filter(Boolean).join(' · ') ||
+                  'Adresse non renseignée'}
               </p>
               {entity.siren ? (
                 <p className="mt-1 text-xs text-slate-500">SIREN {entity.siren}</p>

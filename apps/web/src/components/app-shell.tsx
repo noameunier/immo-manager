@@ -14,7 +14,13 @@ const NAV_ITEMS = [
   { href: '/profil', label: 'Profil' },
 ];
 
-export function AppShell({ user, children }: { user: AuthenticatedUser; children: React.ReactNode }) {
+export function AppShell({
+  user,
+  children,
+}: {
+  user: AuthenticatedUser;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);

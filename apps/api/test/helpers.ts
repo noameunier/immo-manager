@@ -202,4 +202,3 @@ export function sessionCookieFrom(response: { headers: Headers }): string | null
   const match = /immo_session=([^;]+)/.exec(setCookie);
   return match?.[1] ? `immo_session=${match[1]}` : null;
 }
-

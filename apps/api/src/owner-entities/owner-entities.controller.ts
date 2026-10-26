@@ -19,7 +19,11 @@ import {
   type CreateOwnerEntityInput,
   type UpdateOwnerEntityInput,
 } from '@immo/shared';
-import { CurrentAuth, type AuthContext, type AuthenticatedRequest } from '../common/current-auth.decorator';
+import {
+  CurrentAuth,
+  type AuthContext,
+  type AuthenticatedRequest,
+} from '../common/current-auth.decorator';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { OwnerEntitiesService } from './owner-entities.service';
 

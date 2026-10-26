@@ -5,10 +5,7 @@ import { useEffect, useState } from 'react';
 import { apiFetch, errorMessage } from '@/lib/api';
 import { FormAlert, FormSuccess } from '@/components/form-fields';
 
-type State =
-  | { status: 'loading' }
-  | { status: 'success' }
-  | { status: 'error'; message: string };
+type State = { status: 'loading' } | { status: 'success' } | { status: 'error'; message: string };
 
 export function VerifyEmailPanel({ token }: { token: string }) {
   const [state, setState] = useState<State>({ status: 'loading' });

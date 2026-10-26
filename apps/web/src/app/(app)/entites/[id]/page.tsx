@@ -4,7 +4,12 @@ import { notFound } from 'next/navigation';
 import type { Building, OwnerEntity, Property } from '@immo/shared';
 import { ApiError } from '@/lib/api';
 import { ArchiveButton } from '@/components/archive-button';
-import { ArchivedBadge, EntityTypeBadge, OccupancyBadge, PropertyTypeBadge } from '@/components/badges';
+import {
+  ArchivedBadge,
+  EntityTypeBadge,
+  OccupancyBadge,
+  PropertyTypeBadge,
+} from '@/components/badges';
 import { formatDate, formatSurface } from '@/lib/format';
 import { serverFetch } from '@/lib/server-api';
 

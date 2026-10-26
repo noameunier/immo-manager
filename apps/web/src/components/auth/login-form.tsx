@@ -39,7 +39,8 @@ export function LoginForm() {
     try {
       await apiFetch('/auth/login', { method: 'POST', body: parsed.data });
       const next = searchParams.get('suivant');
-      const target = next && next.startsWith('/') && !next.startsWith('//') ? next : '/tableau-de-bord';
+      const target =
+        next && next.startsWith('/') && !next.startsWith('//') ? next : '/tableau-de-bord';
       router.replace(target);
       router.refresh();
     } catch (error) {

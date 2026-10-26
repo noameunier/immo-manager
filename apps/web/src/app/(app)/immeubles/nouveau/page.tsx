@@ -23,7 +23,9 @@ export default async function NewBuildingPage({
         / <span className="text-slate-700">Nouveau</span>
       </nav>
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Ajouter un immeuble</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Ajouter un immeuble
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
           L’immeuble doit être rattaché à l’une de vos entités propriétaires.
         </p>

@@ -1,12 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import {
-  DEFAULT_PASSWORD,
-  api,
-  readEmailToken,
-  registerUser,
-  sessionCookieFrom,
-} from './helpers';
+import { DEFAULT_PASSWORD, api, readEmailToken, registerUser, sessionCookieFrom } from './helpers';
 
 describe('Inscription', () => {
   it('crée un compte avec des données valides et ouvre une session', async () => {

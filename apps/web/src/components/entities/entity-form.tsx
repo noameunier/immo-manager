@@ -177,7 +177,12 @@ export function EntityForm({ entity }: { entity?: OwnerEntity }) {
             defaultValue={entity?.postalCode ?? ''}
             error={errors.postalCode}
           />
-          <TextField label="Ville" name="city" defaultValue={entity?.city ?? ''} error={errors.city} />
+          <TextField
+            label="Ville"
+            name="city"
+            defaultValue={entity?.city ?? ''}
+            error={errors.city}
+          />
           <TextField
             label="Pays"
             name="country"
@@ -199,7 +204,11 @@ export function EntityForm({ entity }: { entity?: OwnerEntity }) {
 
       <div className="flex flex-wrap gap-3">
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Enregistrement…' : isEdit ? 'Enregistrer les modifications' : 'Créer l’entité'}
+          {submitting
+            ? 'Enregistrement…'
+            : isEdit
+              ? 'Enregistrer les modifications'
+              : 'Créer l’entité'}
         </button>
         <button
           type="button"

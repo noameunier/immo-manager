@@ -7,10 +7,9 @@ import {
   uuidSchema,
 } from './common';
 
-export const propertyTypeSchema = z.enum(
-  ['APARTMENT', 'HOUSE', 'GARAGE', 'PARKING', 'BOX'],
-  { message: 'Type de bien invalide' },
-);
+export const propertyTypeSchema = z.enum(['APARTMENT', 'HOUSE', 'GARAGE', 'PARKING', 'BOX'], {
+  message: 'Type de bien invalide',
+});
 
 export const occupancyStatusSchema = z.enum(['VACANT', 'OCCUPIED', 'UNKNOWN'], {
   message: "Statut d'occupation invalide",

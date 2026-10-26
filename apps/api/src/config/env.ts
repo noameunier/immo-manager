@@ -49,11 +49,8 @@ if (!parsed.success) {
 
 export const env: Env = parsed.data;
 
-if (
-  env.NODE_ENV === 'production' &&
-  env.APP_SECRET.startsWith('dev-only-secret')
-) {
-  throw new Error("APP_SECRET de développement interdit en production");
+if (env.NODE_ENV === 'production' && env.APP_SECRET.startsWith('dev-only-secret')) {
+  throw new Error('APP_SECRET de développement interdit en production');
 }
 
 export const isProduction = env.NODE_ENV === 'production';

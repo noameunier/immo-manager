@@ -40,9 +40,7 @@ export default async function DashboardPage({
   const summary = await serverFetch<DashboardSummary>('/dashboard/summary');
 
   const isEmpty =
-    summary.entities.total === 0 &&
-    summary.buildings.total === 0 &&
-    summary.properties.total === 0;
+    summary.entities.total === 0 && summary.buildings.total === 0 && summary.properties.total === 0;
 
   return (
     <div className="space-y-8">
@@ -138,7 +136,8 @@ export default async function DashboardPage({
           </h2>
           <ul className="mt-4 space-y-3">
             {Object.entries(PROPERTY_TYPE_LABELS).map(([type, label]) => {
-              const count = summary.properties.byType[type as keyof typeof summary.properties.byType];
+              const count =
+                summary.properties.byType[type as keyof typeof summary.properties.byType];
               return (
                 <li key={type} className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-slate-600">{label}</span>

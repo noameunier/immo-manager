@@ -2,11 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import {
-  createBuildingSchema,
-  type Building,
-  type OwnerEntity,
-} from '@immo/shared';
+import { createBuildingSchema, type Building, type OwnerEntity } from '@immo/shared';
 import { apiFetch, errorMessage, fieldErrors } from '@/lib/api';
 import {
   FormAlert,

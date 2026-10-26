@@ -115,9 +115,9 @@ export function buildVerificationEmail(params: {
     `Pour confirmer votre adresse email, ouvrez ce lien : ${link}`,
     '',
     `Ce lien expire dans ${expiresInMinutes} minutes et ne peut être utilisé qu’une fois.`,
-    "Si vous n’êtes pas à l’origine de cette demande, ignorez simplement ce message.",
+    'Si vous n’êtes pas à l’origine de cette demande, ignorez simplement ce message.',
     '',
-    "L’équipe Immo Manager",
+    'L’équipe Immo Manager',
   ].join('\n');
 
   return {
@@ -149,9 +149,9 @@ export function buildPasswordResetEmail(params: {
     `Lien de réinitialisation : ${link}`,
     '',
     `Ce lien expire dans ${expiresInMinutes} minutes et ne peut être utilisé qu’une fois.`,
-    "Si vous n’êtes pas à l’origine de cette demande, aucune action n’est nécessaire.",
+    'Si vous n’êtes pas à l’origine de cette demande, aucune action n’est nécessaire.',
     '',
-    "L’équipe Immo Manager",
+    'L’équipe Immo Manager',
   ].join('\n');
 
   return {
@@ -181,10 +181,10 @@ export function buildLoginAlertEmail(params: {
     `Une connexion à votre compte a eu lieu le ${params.at}.`,
     `Appareil : ${params.device}`,
     '',
-    "Si vous êtes à l’origine de cette connexion, aucune action n’est nécessaire.",
-    "Sinon, changez immédiatement votre mot de passe.",
+    'Si vous êtes à l’origine de cette connexion, aucune action n’est nécessaire.',
+    'Sinon, changez immédiatement votre mot de passe.',
     '',
-    "L’équipe Immo Manager",
+    'L’équipe Immo Manager',
   ].join('\n');
 
   return {

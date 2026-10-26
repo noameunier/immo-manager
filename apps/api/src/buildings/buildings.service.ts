@@ -1,14 +1,5 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import type {
-  Building,
-  CreateBuildingInput,
-  Property,
-  UpdateBuildingInput,
-} from '@immo/shared';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import type { Building, CreateBuildingInput, Property, UpdateBuildingInput } from '@immo/shared';
 import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { hashIp } from '../common/crypto';
@@ -143,9 +134,7 @@ export class BuildingsService {
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.reference !== undefined ? { reference: input.reference ?? null } : {}),
         ...(input.addressLine1 !== undefined ? { addressLine1: input.addressLine1 } : {}),
-        ...(input.addressLine2 !== undefined
-          ? { addressLine2: input.addressLine2 ?? null }
-          : {}),
+        ...(input.addressLine2 !== undefined ? { addressLine2: input.addressLine2 ?? null } : {}),
         ...(input.postalCode !== undefined ? { postalCode: input.postalCode } : {}),
         ...(input.city !== undefined ? { city: input.city } : {}),
         ...(input.country !== undefined ? { country: input.country } : {}),

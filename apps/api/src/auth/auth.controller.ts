@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Post,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import {
   forgotPasswordSchema,
@@ -20,7 +12,11 @@ import {
   type ResetPasswordInput,
 } from '@immo/shared';
 import { env, isProduction } from '../config/env';
-import { CurrentAuth, type AuthContext, type AuthenticatedRequest } from '../common/current-auth.decorator';
+import {
+  CurrentAuth,
+  type AuthContext,
+  type AuthenticatedRequest,
+} from '../common/current-auth.decorator';
 import { Public } from '../common/public.decorator';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { RateLimit } from '../common/rate-limit.guard';

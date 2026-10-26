@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  api,
-  createBuilding,
-  createEntity,
-  createProperty,
-  registerUser,
-} from './helpers';
+import { api, createBuilding, createEntity, createProperty, registerUser } from './helpers';
 
 describe('Biens et lots', () => {
   it('crée un lot rattaché à un immeuble', async () => {
@@ -155,10 +149,10 @@ describe('Biens et lots', () => {
     const active = await api<{ id: string }[]>('/properties', { token: user.token });
     expect(active.data.some((item) => item.id === property.id)).toBe(false);
 
-    const restore = await api<{ archivedAt: string | null }>(
-      `/properties/${property.id}/restore`,
-      { method: 'POST', token: user.token },
-    );
+    const restore = await api<{ archivedAt: string | null }>(`/properties/${property.id}/restore`, {
+      method: 'POST',
+      token: user.token,
+    });
     expect(restore.status).toBe(200);
     expect(restore.data.archivedAt).toBeNull();
   });

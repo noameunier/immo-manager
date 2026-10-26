@@ -32,12 +32,20 @@ export const updateBuildingSchema = z
     reference: optionalText(64, 'La référence'),
     addressLine1: requiredText(4, 200, "L'adresse"),
     addressLine2: optionalText(200, "Le complément d'adresse"),
-    postalCode: z.string().trim().regex(/^\d{5}$/, 'Code postal invalide (5 chiffres attendus)'),
+    postalCode: z
+      .string()
+      .trim()
+      .regex(/^\d{5}$/, 'Code postal invalide (5 chiffres attendus)'),
     city: requiredText(2, 120, 'La ville'),
     country: countrySchema,
     constructionYear: z.preprocess(
       (value) => (value === '' || value === null ? undefined : value),
-      z.coerce.number().int().min(1000).max(new Date().getFullYear() + 5).optional(),
+      z.coerce
+        .number()
+        .int()
+        .min(1000)
+        .max(new Date().getFullYear() + 5)
+        .optional(),
     ),
     notes: optionalText(2000, 'Les notes'),
   })

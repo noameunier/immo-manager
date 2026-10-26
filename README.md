@@ -41,22 +41,21 @@ immo-manager/
 │   ├── web/        Application web Next.js (App Router)
 │   └── mobile/     Application mobile Expo / React Native
 ├── packages/
-│   ├── shared/     Schémas Zod, types et constantes partagés
-│   └── config/     Configuration TypeScript / lint partagée
-├── infra/          Docker (dev, staging), Caddy, scripts d'installation
+│   └── shared/     Schémas Zod, types et constantes partagés
+├── infra/          Docker (dev, staging), Caddy, systemd, sauvegardes
 ├── scripts/        Utilitaires (base de test, sauvegardes)
 ├── docs/           Cahier des charges, architecture, roadmap, état du projet
 └── AGENTS.md       Instructions permanentes pour les agents de développement
 ```
 
-| Brique | Technologie |
-|---|---|
-| Mobile | Expo SDK 58, React Native, expo-router |
-| Web | Next.js 16, React 19, Tailwind CSS 4 |
-| API | NestJS 11, Prisma 7, Zod 4 |
-| Base | PostgreSQL 17 |
-| Langage | TypeScript 5.9 (mode strict) |
-| Tests | Vitest, Supertest, Playwright |
+| Brique  | Technologie                            |
+| ------- | -------------------------------------- |
+| Mobile  | Expo SDK 58, React Native, expo-router |
+| Web     | Next.js 16, React 19, Tailwind CSS 4   |
+| API     | NestJS 11, Prisma 7, Zod 4             |
+| Base    | PostgreSQL 17                          |
+| Langage | TypeScript 5.9 (mode strict)           |
+| Tests   | Vitest, Supertest, Playwright          |
 
 Détails et décisions : [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
@@ -98,6 +97,26 @@ pnpm db:up        # services Docker de développement
 
 Le web appelle l'API via une réécriture Next.js (`/api/*` → API interne), ce qui garantit une origine unique et des cookies `httpOnly` protégés.
 
+### Application mobile
+
+```bash
+pnpm dev:mobile     # Expo : QR code pour Expo Go, ou touche « a » pour Android
+```
+
+L'API par défaut est `http://10.0.2.2:4100` (émulateur Android). Pour un appareil
+physique, indiquer l'adresse joignable de l'API :
+
+```bash
+EXPO_PUBLIC_API_URL="http://192.168.1.20:4100" pnpm dev:mobile
+```
+
+Le jeton de session est stocké dans le Keychain iOS / Keystore Android via
+`expo-secure-store`. Le mobile permet en phase 1 de consulter le tableau de bord,
+lister les biens, ouvrir une fiche, archiver/restaurer et gérer son profil.
+
+> Aucun émulateur Android n'est disponible sur le VPS (pas de KVM). La
+> validation sur appareil se fait via Expo Go.
+
 ## Tests
 
 ```bash
@@ -121,24 +140,43 @@ Les tests d'intégration démarrent une vraie instance de l'API sur la base `imm
 
 ## Commandes utiles
 
-| Commande | Description |
-|---|---|
-| `pnpm db:up` / `pnpm db:down` | Démarre / arrête PostgreSQL et Mailpit de développement |
-| `pnpm db:reset` | Recrée la base de développement (destructif) |
-| `pnpm db:test` | Prépare la base `immo_test` |
-| `pnpm db:seed` | Injecte un jeu de données de démonstration |
-| `pnpm --filter @immo/api prisma:studio` | Explorateur de base Prisma Studio |
-| `pnpm format` | Formatage Prettier |
+| Commande                                | Description                                             |
+| --------------------------------------- | ------------------------------------------------------- |
+| `pnpm db:up` / `pnpm db:down`           | Démarre / arrête PostgreSQL et Mailpit de développement |
+| `pnpm db:reset`                         | Recrée la base de développement (destructif)            |
+| `pnpm db:test`                          | Prépare la base `immo_test`                             |
+| `pnpm db:staging:up`                    | Démarre PostgreSQL de préproduction (5435)              |
+| `pnpm backup`                           | Sauvegarde chiffrée de la base de préproduction         |
+| `pnpm services:install`                 | Installe les services systemd utilisateur               |
+| `pnpm db:seed`                          | Injecte un jeu de données de démonstration              |
+| `pnpm --filter @immo/api prisma:studio` | Explorateur de base Prisma Studio                       |
+| `pnpm format`                           | Formatage Prettier                                      |
 
 ## Environnements
 
-| Environnement | Usage | Accès |
-|---|---|---|
-| Développement | Poste de travail / VPS, données fictives | `localhost` |
-| Préproduction | Validation avant publication | `staging-immo.noameunier.fr` |
-| Production | Non autorisée à ce stade | — |
+| Environnement | Usage                                    | Accès                        |
+| ------------- | ---------------------------------------- | ---------------------------- |
+| Développement | Poste de travail / VPS, données fictives | `localhost`                  |
+| Préproduction | Validation avant publication             | `staging-immo.noameunier.fr` |
+| Production    | Non autorisée à ce stade                 | —                            |
 
 Aucun déploiement en production n'est effectué sans validation explicite. Voir [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#environnements).
+
+## Déploiement et sauvegardes
+
+Le VPS héberge d'autres projets : les vhosts Caddy sont isolés dans
+`infra/caddy/immo.caddy`, importés une seule fois par un humain avec sudo.
+Tous les ports applicatifs restent liés à `127.0.0.1`.
+
+```bash
+sudo bash infra/bootstrap/install-caddy-import.sh   # une seule fois
+bash infra/bootstrap/install-user-services.sh all    # services systemd --user
+pnpm db:staging:up                                   # PostgreSQL de préproduction
+pnpm backup                                          # pg_dump + age + rclone
+```
+
+Procédure complète, secrets, planification et test de restauration :
+[`infra/README.md`](infra/README.md).
 
 ## Sécurité
 

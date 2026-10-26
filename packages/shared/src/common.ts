@@ -18,11 +18,7 @@ export const requiredText = (min: number, max: number, label = 'Ce champ') =>
 export const optionalText = (max: number, label = 'Ce champ') =>
   z.preprocess(
     emptyToUndefined,
-    z
-      .string()
-      .trim()
-      .max(max, `${label} ne peut pas dépasser ${max} caractères`)
-      .optional(),
+    z.string().trim().max(max, `${label} ne peut pas dépasser ${max} caractères`).optional(),
   );
 
 export const emailSchema = z
@@ -130,7 +126,6 @@ export const queryBooleanSchema = z.preprocess((value) => {
   if (value === false || value === 'false' || value === '0') return false;
   return undefined;
 }, z.boolean().optional());
-
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 

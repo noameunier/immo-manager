@@ -327,10 +327,7 @@ export class AuthService {
     }
   }
 
-  private async findUsableEmailToken(
-    token: string,
-    type: 'VERIFY_EMAIL' | 'RESET_PASSWORD',
-  ) {
+  private async findUsableEmailToken(token: string, type: 'VERIFY_EMAIL' | 'RESET_PASSWORD') {
     const record = await this.prisma.emailToken.findUnique({
       where: { tokenHash: hashToken(token) },
       include: { user: true },

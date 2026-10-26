@@ -42,9 +42,7 @@ export function PropertyForm({
   const [entityId, setEntityId] = useState(
     property?.entityId ?? defaultEntityId ?? entities[0]?.id ?? '',
   );
-  const [buildingId, setBuildingId] = useState(
-    property?.buildingId ?? defaultBuildingId ?? '',
-  );
+  const [buildingId, setBuildingId] = useState(property?.buildingId ?? defaultBuildingId ?? '');
 
   const availableBuildings = useMemo(
     () => buildings.filter((building) => building.entityId === entityId),
