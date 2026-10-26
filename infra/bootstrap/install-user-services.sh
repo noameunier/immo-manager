@@ -19,6 +19,10 @@ UNIT_DIR="${HOME}/.config/systemd/user"
 SECRETS_DIR="${HOME}/.secrets/immo-manager"
 MODE="${1:-all}"
 
+# Les shells non interactifs n'ont pas toujours XDG_RUNTIME_DIR ; systemd --user
+# en a besoin pour joindre le bus utilisateur.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
 mkdir -p "${UNIT_DIR}"
 
 install_unit() {

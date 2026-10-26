@@ -90,7 +90,9 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
   profil, 404.
 - Interface française, responsive, navigation clavier, messages d'erreur
   champ par champ issus des schémas partagés.
-- Same-origin : rewrite `/api/*` → API interne, cookies first-party, pas de CORS.
+- Same-origin : relais `/api/*` → API interne via route handler lisant
+  `API_INTERNAL_URL` à l'exécution (4100 en dev, 4200 en préproduction),
+  cookies first-party, pas de CORS.
 - `proxy.ts` (ex-`middleware.ts`, renommé pour Next 16).
 
 ### 3.4 Mobile
@@ -117,10 +119,13 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
   `ARCHITECTURE.md`, `ROADMAP.md`, `infra/README.md`.
 - `infra/caddy/immo.caddy` (4 vhosts), `infra/bootstrap/install-caddy-import.sh`
   (sudo, idempotent, lien symbolique), `install-user-services.sh`.
-- 4 unités systemd utilisateur (API/web, dev/préproduction).
+- 4 unités systemd utilisateur (API/web, dev/préproduction), installées et
+  actives sur le VPS, toutes liées à `127.0.0.1`.
 - `infra/docker/docker-compose.staging.yml` (PostgreSQL 5435).
 - `infra/backup/` : sauvegarde `pg_dump` + chiffrement `age` + envoi `rclone`,
-  restauration avec garde-fous, exemple de configuration.
+  restauration avec garde-fous, exemple de configuration. `age` et `rclone`
+  sont installés dans `~/.local/bin` ; une sauvegarde et une restauration
+  réelles ont été validées.
 - CI GitHub Actions : lint, types, tests API, builds (dont bundle mobile) et
   parcours Playwright.
 
@@ -130,27 +135,42 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
 5241c07  chore: initialiser le monorepo Immo Manager et l'API du patrimoine
 7155690  test: couvrir l'authentification, le patrimoine et l'isolation
 eeb7dc0  feat: livrer l'application web Next.js et le jeu de démonstration
+f445c55  style: uniformiser le formatage Prettier sur le dépôt
+5f1a236  feat: ajouter l'application mobile Expo
+740f28b  fix: restreindre le serveur web à l'interface locale
+19a0157  test: couvrir les schémas de validation partagés
+10acb6b  feat: préparer la préproduction, les sauvegardes et la CI
 ```
 
-Le travail mobile, l'infrastructure, la CI et cette documentation forment le
-commit suivant.
+Les commits suivants remplacent le rewrite Next.js par un relais runtime
+(préproduction sur 4200 sans rebuild) et ajoutent la validation de la
+préproduction et de la sauvegarde.
 
 ## 5. Vérifications réellement exécutées
 
-| Commande                                    | Résultat                                          | Date       |
-| ------------------------------------------- | ------------------------------------------------- | ---------- |
-| `pnpm --filter @immo/api test`              | 43 tests passés, 21 s                             | 26/10/2026 |
-| `pnpm --filter @immo/shared test`           | 20 tests passés                                   | 26/10/2026 |
-| `pnpm --filter @immo/web test:e2e`          | 2 tests passés                                    | 26/10/2026 |
-| `pnpm --filter @immo/web build`             | 16 routes, succès                                 | 26/10/2026 |
-| `pnpm --filter @immo/mobile build`          | bundle Android 3,2 Mo                             | 26/10/2026 |
-| `pnpm typecheck` (api, web, mobile, shared) | 0 erreur                                          | 26/10/2026 |
-| `pnpm lint`                                 | 0 erreur, 0 avertissement                         | 26/10/2026 |
-| `pnpm --filter @immo/api db:seed`           | 2 entités, 1 immeuble, 4 biens                    | 26/10/2026 |
-| Smoke web via `/api`                        | inscription, cookie, création, rendu, redirection | 26/10/2026 |
+| Commande                                      | Résultat                                                                              | Date       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------- | ---------- |
+| `pnpm --filter @immo/api test`                | 43 tests passés, 21 s                                                                 | 26/10/2026 |
+| `pnpm --filter @immo/shared test`             | 20 tests passés                                                                       | 26/10/2026 |
+| `pnpm --filter @immo/web test:e2e`            | 2 tests passés                                                                        | 26/10/2026 |
+| `pnpm --filter @immo/web build`               | 17 routes, succès                                                                     | 26/10/2026 |
+| `pnpm --filter @immo/mobile build`            | bundle Android 3,2 Mo                                                                 | 26/10/2026 |
+| `pnpm typecheck` (api, web, mobile, shared)   | 0 erreur                                                                              | 26/10/2026 |
+| `pnpm lint`                                   | 0 erreur, 0 avertissement                                                             | 26/10/2026 |
+| `pnpm --filter @immo/api db:seed`             | 2 entités, 1 immeuble, 4 biens                                                        | 26/10/2026 |
+| Smoke web via `/api`                          | inscription, cookie, création, rendu, redirection                                     | 26/10/2026 |
+| Préproduction réelle (port 4200)              | inscription → 403 avant vérification → email Mailpit → vérification → tableau de bord | 26/10/2026 |
+| `infra/backup/backup-immo.sh`                 | dump chiffré age (30 Kio) + empreinte SHA-256                                         | 26/10/2026 |
+| `infra/backup/restore-immo.sh`                | restauration dans `immo_restore` vérifiée (1 utilisateur)                             | 26/10/2026 |
+| Services systemd utilisateur                  | 4 services actifs, ports 3100/3200/4100/4200 en 127.0.0.1                             | 26/10/2026 |
+| `install-caddy-import.sh` (validation locale) | `caddy validate` du fichier de vhosts : valide                                        | 26/10/2026 |
+| Simulation CI en clone neuf                   | install, lint, types et 43 tests verts avec `NODE_ENV=test`                           | 26/10/2026 |
+| Garde-fou du port de test                     | message explicite si 4200 est occupé, au lieu de tests contre une autre instance      | 26/10/2026 |
 
-Ce qui **n'a pas** été vérifié : CI GitHub Actions (sera confirmée au prochain
-push), déploiement HTTPS réel, envoi d'email réel, application mobile sur
+Ce qui **n'a pas** été vérifié : CI GitHub Actions verte (le premier essai a
+échoué au démarrage des tests, cause masquée par un bug de formatage de Vitest ;
+diagnostic publié en annotations au prochain push), exposition HTTPS publique
+(DNS et Caddy en attente), envoi d'email réel via Brevo, application mobile sur
 appareil physique.
 
 ## 6. Blocages et dépendances humaines
@@ -159,37 +179,47 @@ appareil physique.
 | ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | DNS non créé                    | Aucun accès HTTPS public      | Créer 4 enregistrements A (TTL 300, sans Alias) vers `45.155.171.57` : `immo`, `api-immo`, `staging-immo`, `api-staging-immo` |
 | Caddy non branché               | Vhosts absents du Caddyfile   | `sudo bash infra/bootstrap/install-caddy-import.sh` (une fois)                                                                |
-| Clé Brevo absente               | Emails réels impossibles      | Fournir `MAIL_API_KEY` et `MAIL_PROVIDER=brevo` dans les secrets de préproduction                                             |
-| rclone/Proton non configuré     | Sauvegarde distante inactive  | Créer le remote `immo-backup` et la paire de clés `age`                                                                       |
+| Clé Brevo absente               | Emails réels impossibles      | Fournir `MAIL_API_KEY` et passer `MAIL_PROVIDER=brevo` dans `~/.secrets/immo-manager/staging-api.env`                         |
+| Remote rclone non configuré     | Sauvegarde distante inactive  | `rclone config` pour créer un remote nommé `immo-backup`, puis renseigner `RCLONE_REMOTE`                                     |
 | Pas d'émulateur Android / KVM   | Mobile non testé sur appareil | Tester via Expo Go sur un téléphone, ou fournir un appareil                                                                   |
-| `backup-vps` global non vérifié | Couverture incertaine         | La sauvegarde projet autonome remplace cette dépendance                                                                       |
+| `backup-vps` global non vérifié | Couverture incertaine         | La sauvegarde projet autonome (testée) remplace cette dépendance                                                              |
 
 Aucun de ces blocages n'empêche le développement local ni les tests.
 
 ## 7. Prochaines actions (ordre recommandé)
 
-1. **Pousser le commit courant** et vérifier la CI :
-   `gh run list --limit 3` ou l'onglet Actions.
-2. **Créer `/home/dev/.secrets/immo-manager/`** (`chmod 700`) et y placer :
-   - `staging-api.env` (modèle : `.env.example`, avec `NODE_ENV=production`,
-     `REQUIRE_EMAIL_VERIFICATION=true`, mot de passe de base dédié,
-     `WEB_ORIGIN=https://staging-immo.noameunier.fr`) ;
-   - `backup.env` et `age-key.txt`.
-3. **Installer age et rclone** en espace utilisateur (procédure dans
-   `infra/README.md`), générer la paire `age`, configurer le remote rclone,
-   exécuter une sauvegarde puis **un test de restauration** dans `immo_restore`.
-4. **Démarrer la base de préproduction** :
-   `IMMO_STAGING_DB_PASSWORD=… pnpm db:staging:up`, appliquer les migrations.
-5. **Demander à l'humain** : création DNS + `install-caddy-import.sh`.
-6. **Installer les services** : `bash infra/bootstrap/install-user-services.sh all`,
-   puis `loginctl enable-linger dev`.
-7. **Vérifier HTTPS** : `/health` sur les deux API, page de connexion sur les
-   deux web, absence de port public (`ss -ltnp`).
-8. **Configurer Brevo** dès que la clé est disponible, puis tester inscription +
-   vérification email + réinitialisation sur la préproduction.
-9. **Tester le mobile** via Expo Go (`EXPO_PUBLIC_API_URL=https://api-staging-immo.noameunier.fr`).
-10. **Valider la phase 1** avec un utilisateur réel, puis ouvrir la phase 2
-    (baux et loyers) selon [`ROADMAP.md`](ROADMAP.md).
+1. **Pousser le commit courant** et vérifier la CI (onglet Actions du dépôt,
+   ou API GitHub publique). Corriger en priorité tout échec de
+   `pnpm install --frozen-lockfile` ou du parcours Playwright.
+2. **Demander à l'humain** les deux actions bloquantes :
+   - création des 4 enregistrements DNS A vers `45.155.171.57` ;
+   - `sudo bash infra/bootstrap/install-caddy-import.sh`.
+3. **Vérifier HTTPS** dès que le DNS répond :
+   `curl -fsS https://api-staging-immo.noameunier.fr/health`,
+   puis la page `https://staging-immo.noameunier.fr/connexion`.
+   Les certificats sont émis au premier accès.
+4. **Configurer Brevo** : renseigner `MAIL_PROVIDER=brevo` et `MAIL_API_KEY`
+   dans `~/.secrets/immo-manager/staging-api.env`, puis
+   `systemctl --user restart immo-staging-api`. Tester inscription,
+   vérification email et réinitialisation avec une adresse réelle.
+5. **Activer la sauvegarde distante** : `rclone config` (remote `immo-backup`),
+   renseigner `RCLONE_REMOTE` dans `backup.env`, puis exécuter
+   `pnpm backup` et vérifier la présence de l'archive distante.
+   Planifier la tâche cron quotidienne (voir `infra/README.md`).
+6. **Tester le mobile** via Expo Go :
+   `EXPO_PUBLIC_API_URL=https://api-staging-immo.noameunier.fr pnpm dev:mobile`.
+   Vérifier connexion, tableau de bord, liste et fiche d'un bien, archivage.
+7. **Valider la phase 1** avec un utilisateur réel, puis mettre à jour
+   `ROADMAP.md` et ouvrir la phase 2 (baux et loyers).
+
+Rappels d'exploitation :
+
+```bash
+systemctl --user status immo-api immo-web immo-staging-api immo-staging-web
+journalctl --user -u immo-staging-api -f
+systemctl --user restart immo-staging-api   # après modification des secrets
+pnpm backup                                  # sauvegarde chiffrée
+```
 
 ## 8. Pièges à ne pas réintroduire
 
@@ -209,6 +239,15 @@ Aucun de ces blocages n'empêche le développement local ni les tests.
 - **Ports** : 3100 web, 4100 API, 4200 API de test, 3200 web préprod,
   5434 base dev, 5435 base préprod, 1026/8026 Mailpit. Ne jamais utiliser
   4000, 5433, 8080, 1025, 8025 (autre projet).
+- **Tests d'intégration** : le port 4200 doit être libre. Les services systemd
+  de préproduction occupent 4200 : les arrêter (`systemctl --user stop
+immo-staging-api`) avant `pnpm test`, sinon le script refuse de démarrer —
+  garde-fou volontaire pour éviter de tester une autre instance.
+- **Tests et emails** : deux tests lisent les emails via l'API HTTP de Mailpit
+  (8026). Sans Mailpit, ils échouent ; la CI fournit le service.
+- **Vitest 5 / Vite 8** : ne jamais lire `error.stack` dans le `globalSetup`.
+  Le formateur de piles de Vite plante (`code.charCodeAt is not a function`) et
+  masque complètement la cause réelle. Imprimer `error.message` suffit.
 - **Ne jamais lier un service à `0.0.0.0`** : toujours `127.0.0.1`, Caddy expose.
 
 ## 9. Comptes et données de démonstration

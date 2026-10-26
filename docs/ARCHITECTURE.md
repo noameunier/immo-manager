@@ -14,7 +14,7 @@
                                 │          │
                      /api/*     ▼          ▼  /*
                         ┌────────────┐  ┌───────────────┐
-                        │ API NestJS │◀─│ Next.js (web) │  rewrite /api/* → API
+                        │ API NestJS │◀─│ Next.js (web) │  relais /api/* → API
                         │ 127.0.0.1  │  │  127.0.0.1    │
                         │   :4100    │  │    :3100      │
                         └─────┬──────┘  └───────────────┘
@@ -65,7 +65,7 @@ ses consommateurs (`tsup`, sortie ESM + CJS + types).
 | API           | NestJS 11                                   | Modules par domaine, garde globale, testabilité, écosystème mature |
 | ORM           | Prisma 7 + `@prisma/adapter-pg`             | Typage strict, migrations versionnées, SQL explicite possible      |
 | Base          | PostgreSQL 17                               | Contraintes composites, index partiels, robustesse                 |
-| Web           | Next.js 16 App Router                       | Rendu serveur, rewrites same-origin, déploiement simple            |
+| Web           | Next.js 16 App Router                       | Rendu serveur, relais same-origin, déploiement simple              |
 | Styles        | Tailwind CSS 4                              | Aucun runtime CSS-in-JS, build rapide                              |
 | Mobile        | Expo SDK 58                                 | Build Android/iOS sans toolchain native sur le VPS                 |
 | Validation    | Zod 4 dans `packages/shared`                | Un seul schéma pour l'API et les deux clients                      |
@@ -126,7 +126,7 @@ sans fuite d'information de volume.
 
 ### 5.1 Conventions
 
-- Préfixe racine : `/` (pas de `/api` côté API ; le web ajoute `/api` via rewrite).
+- Préfixe racine : `/` (pas de `/api` côté API ; le web ajoute `/api` via son route handler).
 - Réponses : objets JSON simples, jamais de classe sérialisée.
 - Erreurs :
 
@@ -205,8 +205,9 @@ oublié 5/heure. En-tête de contournement `x-test-skip-rate-limit: 1` accepté
 - `proxy.ts` (ancien `middleware.ts`, renommé pour Next 16) redirige les visiteurs
   non connectés vers `/connexion?suivant=…` sur la seule base du cookie ; la
   validité réelle est toujours vérifiée par l'API.
-- `next.config.ts` réécrit `/api/:path*` vers `API_INTERNAL_URL` (défaut
-  `http://127.0.0.1:4100`), d'où l'absence de CORS en production web.
+- `src/app/api/[...path]/route.ts` relaie `/api/*` vers `API_INTERNAL_URL`
+  (défaut `http://127.0.0.1:4100`), lu à l'exécution : le même build sert le
+  développement (4100) et la préproduction (4200), sans CORS.
 - Composants serveur : `serverFetch` transmet explicitement le cookie entrant.
 - Composants clients : `apiFetch` utilise `credentials: 'include'`.
 - Erreurs API mappées vers des messages français, `details` distribués par champ.
@@ -232,7 +233,7 @@ oublié 5/heure. En-tête de contournement `x-test-skip-rate-limit: 1` accepté
 | ------------- | ------------------ | ---------------- | ---------------- | ------------------- | --------------- |
 | Développement | `immo_dev` (5434)  | `127.0.0.1:4100` | `localhost:3100` | Mailpit :1026/:8026 | local           |
 | Test          | `immo_test` (5434) | `127.0.0.1:4200` | —                | désactivé           | local           |
-| Préproduction | `immo_staging`     | `127.0.0.1:4200` | `127.0.0.1:3200` | Brevo               | `staging-immo…` |
+| Préproduction | `immo_staging`     | `127.0.0.1:4200` | `127.0.0.1:3200` | Mailpit → Brevo     | `staging-immo…` |
 | Production    | `immo_prod`        | non déployé      | non déployé      | —                   | —               |
 
 Les ports 4000, 5433, 8080, 1025 et 8025 appartiennent à un autre projet du VPS
@@ -283,12 +284,30 @@ rattachement croisés entre deux propriétaires → 404 systématique.
 Les tests d'intégration démarrent l'API compilée (`node dist/main.js`) : `tsx`
 n'émet pas `emitDecoratorMetadata`, ce qui casserait l'injection NestJS.
 
+Deux dépendances d'exécution sont nécessaires :
+
+- **PostgreSQL** (`immo_test`) pour les données ;
+- **Mailpit** pour deux tests de bout en bout (vérification d'email et
+  réinitialisation de mot de passe, lus via l'API HTTP de Mailpit sur 8026).
+  La CI GitHub Actions fournit les deux services.
+
+Le script de préparation refuse de démarrer si le port 4200 est déjà occupé :
+sans ce garde-fou, les tests interrogeraient silencieusement une autre instance
+(par exemple l'API de préproduction) et les résultats seraient faux sans erreur.
+
+En CI, les journaux d'un dépôt public ne sont pas lisibles sans authentification.
+Les lignes d'échec essentielles sont donc republiées en **annotations** de job,
+lisibles via l'API GitHub. La préparation imprime aussi son message d'erreur
+directement : Vitest 5 plante en formatant certaines piles (`code.charCodeAt`),
+ce qui masquerait totalement la cause d'un échec de démarrage. Il ne faut donc
+jamais lire `error.stack` dans le `globalSetup`.
+
 ## 11. Décisions et compromis
 
 | Décision                       | Alternative écartée           | Raison                                                                 |
 | ------------------------------ | ----------------------------- | ---------------------------------------------------------------------- |
 | Sessions opaques en base       | JWT                           | Révocation immédiate, pas de clé de signature à faire tourner          |
-| Same-origin via rewrite        | CORS + cookies tiers          | Cookies first-party, pas de préflight, surface d'attaque réduite       |
+| Same-origin via relais serveur | CORS + cookies tiers          | Cookies first-party, pas de préflight, cible lue à l'exécution         |
 | FK composites `(id, owner_id)` | Filtrage applicatif seul      | La base garantit l'isolation même en cas de bug                        |
 | Archivage                      | Suppression physique          | Récupération possible, historique conservé, pas de cascade destructive |
 | pnpm workspaces                | Turborepo / Nx                | Complexité inutile pour 4 paquets                                      |
@@ -305,5 +324,6 @@ n'émet pas `emitDecoratorMetadata`, ce qui casserait l'injection NestJS.
 4. **Médias non implémentés** — table présente, upload absent.
 5. **Pas de TOTP** — colonnes présentes, interface absente.
 6. **Mobile en lecture seule** — création/modification réservées au web.
-7. **Pas de tests unitaires isolés** — couverture assurée par l'intégration ;
-   à compléter pour les fonctions pures critiques (crypto, formats).
+7. **Peu de tests unitaires isolés** — les schémas partagés sont couverts
+   (20 tests), le reste l'est par l'intégration ; compléter pour la crypto et
+   les formats.

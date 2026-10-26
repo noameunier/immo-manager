@@ -3,13 +3,9 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Le web et l'API partagent la même origine publique : le navigateur appelle
-  // /api/* et Next relaie vers l'API interne. Les cookies httpOnly restent
-  // first-party et aucune requête CORS n'est nécessaire.
-  async rewrites() {
-    const apiUrl = process.env.API_INTERNAL_URL ?? 'http://127.0.0.1:4100';
-    return [{ source: '/api/:path*', destination: `${apiUrl}/:path*` }];
-  },
+  // Le web et l'API partagent la même origine publique. Le relais /api/* est
+  // implémenté dans src/app/api/[...path]/route.ts : il lit API_INTERNAL_URL à
+  // l'exécution, ce qui permet de réutiliser le même build en préproduction.
   async headers() {
     return [
       {

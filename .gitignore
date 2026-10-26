@@ -45,3 +45,6 @@ backups/*.age
 # expo
 .expo/
 .expo-shared/
+
+# sauvegardes locales (jamais versionnées)
+backups/

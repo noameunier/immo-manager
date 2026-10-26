@@ -35,7 +35,8 @@ export default defineConfig({
     {
       command: `pnpm --filter @immo/web exec next start --hostname 127.0.0.1 --port ${WEB_PORT}`,
       cwd: '../..',
-      url: `http://localhost:${WEB_PORT}/connexion`,
+      // Le serveur écoute uniquement en IPv4 ; on évite une résolution ::1.
+      url: `http://127.0.0.1:${WEB_PORT}/connexion`,
       reuseExistingServer: true,
       timeout: 120_000,
     },
