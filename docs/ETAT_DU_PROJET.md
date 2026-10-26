@@ -24,16 +24,21 @@ pnpm test
 
 Puis reprendre à la **section 7 — Prochaines actions**, dans l'ordre.
 
-Services actuellement lancés manuellement sur le VPS (à relancer si absents) :
+Services applicatifs (systemd utilisateur, survivent à la déconnexion) :
 
 ```bash
-cd apps/api && nohup node dist/main.js > /tmp/opencode/immo-api.log 2>&1 &
-cd apps/web && nohup pnpm exec next start --hostname 127.0.0.1 --port 3100 \
-  > /tmp/opencode/immo-web.log 2>&1 &
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+systemctl --user status immo-api immo-web immo-staging-api immo-staging-web
+systemctl --user restart immo-api
+journalctl --user -u immo-staging-api -f
 ```
 
 Vérification : `curl -s http://127.0.0.1:4100/health` et
 `curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/connexion`.
+
+Les tests d'intégration occupent le port 4200 : arrêter `immo-staging-api`
+avant `pnpm test` (le script refuse de démarrer sinon, pour ne pas tester la
+mauvaise instance).
 
 ## 2. Résumé
 
@@ -50,6 +55,7 @@ Vérification : `curl -s http://127.0.0.1:4100/health` et
 | Tests E2E      | **2/2 verts** (Playwright, Chromium)                         |
 | Builds         | API, web et bundle Android Expo : OK                         |
 | Lint / types   | Tous les paquets : OK                                        |
+| CI GitHub      | **verte** : 2 jobs (checks, Playwright) sur `main`           |
 
 ## 3. Ce qui est livré
 
@@ -140,11 +146,21 @@ f445c55  style: uniformiser le formatage Prettier sur le dépôt
 740f28b  fix: restreindre le serveur web à l'interface locale
 19a0157  test: couvrir les schémas de validation partagés
 10acb6b  feat: préparer la préproduction, les sauvegardes et la CI
+deebc4a  fix: fiabiliser les tests d'intégration et le diagnostic CI
+de56a25  feat: relayer l'API à l'exécution et valider la préproduction
+d3b219d  fix: construire le web en mode production dans la CI
 ```
 
-Les commits suivants remplacent le rewrite Next.js par un relais runtime
-(préproduction sur 4200 sans rebuild) et ajoutent la validation de la
-préproduction et de la sauvegarde.
+Deux échecs de CI ont été diagnostiqués puis corrigés :
+
+1. **Tests d'intégration** : la cause réelle était masquée par un plantage du
+   formateur de piles de Vitest (`code.charCodeAt`). Le job fournit désormais
+   Mailpit, le port 4200 est vérifié et le message d'erreur est imprimé
+   directement. Les échecs sont republiés en annotations lisibles sans
+   authentification.
+2. **Parcours Playwright** : `next build` héritait de `NODE_ENV=development` et
+   le prérendu de `/_global-error` échouait. Chaque étape et chaque serveur
+   Playwright fixe maintenant son `NODE_ENV`.
 
 ## 5. Vérifications réellement exécutées
 
@@ -166,12 +182,11 @@ préproduction et de la sauvegarde.
 | `install-caddy-import.sh` (validation locale) | `caddy validate` du fichier de vhosts : valide                                        | 26/10/2026 |
 | Simulation CI en clone neuf                   | install, lint, types et 43 tests verts avec `NODE_ENV=test`                           | 26/10/2026 |
 | Garde-fou du port de test                     | message explicite si 4200 est occupé, au lieu de tests contre une autre instance      | 26/10/2026 |
+| GitHub Actions `main` (`d3b219d`)             | job `checks` vert (lint, types, 43 tests, builds) et job Playwright vert (2 tests)    | 26/10/2026 |
 
-Ce qui **n'a pas** été vérifié : CI GitHub Actions verte (le premier essai a
-échoué au démarrage des tests, cause masquée par un bug de formatage de Vitest ;
-diagnostic publié en annotations au prochain push), exposition HTTPS publique
-(DNS et Caddy en attente), envoi d'email réel via Brevo, application mobile sur
-appareil physique.
+Ce qui **n'a pas** été vérifié : exposition HTTPS publique (DNS et Caddy en
+attente), envoi d'email réel via Brevo, application mobile sur appareil
+physique, sauvegarde distante (remote rclone non configuré).
 
 ## 6. Blocages et dépendances humaines
 
@@ -188,9 +203,9 @@ Aucun de ces blocages n'empêche le développement local ni les tests.
 
 ## 7. Prochaines actions (ordre recommandé)
 
-1. **Pousser le commit courant** et vérifier la CI (onglet Actions du dépôt,
-   ou API GitHub publique). Corriger en priorité tout échec de
-   `pnpm install --frozen-lockfile` ou du parcours Playwright.
+1. **Vérifier la CI** : elle est verte sur `main` (`checks` + Playwright). En cas
+   d'échec futur, lire les **annotations** du job (API GitHub publique), elles
+   contiennent les lignes d'échec essentielles.
 2. **Demander à l'humain** les deux actions bloquantes :
    - création des 4 enregistrements DNS A vers `45.155.171.57` ;
    - `sudo bash infra/bootstrap/install-caddy-import.sh`.
@@ -277,3 +292,4 @@ Le script `prisma/seed.ts` refuse de s'exécuter si `NODE_ENV=production`.
 | 26/10/2026 | 43 tests d'intégration, isolation multi-propriétaire validée       |
 | 26/10/2026 | Application web complète, seed, 2 tests Playwright                 |
 | 26/10/2026 | Application mobile Expo, documentation, infrastructure, CI         |
+| 26/10/2026 | CI verte : tests API, builds et parcours Playwright                |

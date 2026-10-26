@@ -93,7 +93,8 @@ poursuivre les tâches indépendantes.
 1. Lire `docs/ETAT_DU_PROJET.md` (section « Reprise »).
 2. `pnpm install && pnpm db:up`, puis `pnpm db:test` si des tests doivent tourner.
 3. Vérifier `git status` et `git log --oneline -10`.
-4. Lancer `pnpm typecheck && pnpm test` pour confirmer l'état de départ.
+4. Arrêter `immo-staging-api` (port 4200) avant les tests d'intégration, puis
+   lancer `pnpm typecheck && pnpm test` pour confirmer l'état de départ.
 5. Reprendre à la première action non terminée listée dans l'état du projet.
 
 ## 8. Pièges connus
@@ -104,5 +105,9 @@ poursuivre les tâches indépendantes.
 - **Prisma 7** : l'URL de connexion est dans `prisma.config.ts`, pas dans `schema.prisma`.
   Le client utilise `@prisma/adapter-pg`.
 - **Next.js 16** : `params` et `searchParams` sont des `Promise` dans les pages.
+  `next build` exige `NODE_ENV=production` : hérité en `development`, le prérendu
+  échoue (`useContext` sur null). Les serveurs E2E fixent leur `NODE_ENV`.
+- **Vitest 5** : ne jamais lire `error.stack` dans le `globalSetup` (plantage du
+  formateur de piles qui masque la cause). Imprimer `error.message`.
 - **Ports** : 3100 web, 4100 API, 5434 PostgreSQL dev, 1026/8026 Mailpit. Ne pas réutiliser
   les ports de Pokero (4000, 5433, 8080, 1025, 8025).
