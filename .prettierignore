@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+.next
+.pnpm-store
+coverage
+playwright-report
+test-results
+apps/api/src/generated
+pnpm-lock.yaml
+apps/mobile/android
+apps/mobile/ios

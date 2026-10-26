@@ -1,0 +1,37 @@
+{
+  "name": "immo-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gestion de patrimoine immobilier pour propriétaires particuliers, SCI, sociétés et indivisions",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "pnpm run --parallel --stream dev:api dev:web",
+    "dev:api": "pnpm --filter @immo/api dev",
+    "dev:web": "pnpm --filter @immo/web dev",
+    "dev:mobile": "pnpm --filter @immo/mobile start",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:e2e": "pnpm --filter @immo/web test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose -f infra/docker/docker-compose.dev.yml up -d --wait",
+    "db:down": "docker compose -f infra/docker/docker-compose.dev.yml down",
+    "db:reset": "bash scripts/db-reset.sh",
+    "db:seed": "pnpm --filter @immo/api db:seed",
+    "db:test": "bash scripts/db-test-setup.sh"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.46.1"
+  }
+}
