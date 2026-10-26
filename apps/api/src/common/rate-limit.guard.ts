@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { createHash } from 'node:crypto';
+import { isTest } from '../config/env';
 
 export type RateLimitOptions = {
   /** Nombre maximum de requêtes autorisées sur la fenêtre. */
@@ -45,6 +46,10 @@ export class RateLimitGuard implements CanActivate {
     if (!options) return true;
 
     const http = context.switchToHttp();
+    const rawRequest = http.getRequest<Request>();
+    // Échappatoire réservée aux tests automatisés : jamais active hors NODE_ENV=test.
+    if (isTest && rawRequest.headers['x-test-skip-rate-limit'] === '1') return true;
+
     const request = http.getRequest<Request & { ip?: string }>();
     const response = http.getResponse<Response>();
 
