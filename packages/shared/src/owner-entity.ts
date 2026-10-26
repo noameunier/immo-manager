@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
   countrySchema,
-  emailSchema,
   optionalEmailSchema,
   optionalFrenchPostalCodeSchema,
   optionalText,
@@ -9,7 +8,6 @@ import {
   requiredText,
   sirenSchema,
   siretSchema,
-  uuidSchema,
 } from './common';
 
 export const ownerEntityTypeSchema = z.enum(['INDIVIDUAL', 'SCI', 'COMPANY', 'UNDIVIDED'], {

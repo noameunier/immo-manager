@@ -43,7 +43,6 @@ if (!parsed.success) {
   const details = parsed.error.issues
     .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
     .join('\n');
-  // eslint-disable-next-line no-console
   console.error(`Configuration invalide :\n${details}`);
   process.exit(1);
 }

@@ -22,8 +22,8 @@ export type OccupancyStatus = z.infer<typeof occupancyStatusSchema>;
 const propertyFields = {
   entityId: uuidSchema,
   buildingId: z.preprocess(
-    (value) => (value === '' || value === null ? undefined : value),
-    uuidSchema.optional(),
+    (value) => (value === '' || value === undefined ? undefined : value),
+    z.union([uuidSchema, z.null()]).optional(),
   ),
   name: requiredText(2, 160, 'Le nom du bien'),
   reference: optionalText(64, 'La référence'),

@@ -10,6 +10,7 @@ import {
 import { hash as hashPassword, verify as verifyPassword } from '@node-rs/argon2';
 import { env } from '../config/env';
 import { generateToken, hashIp, hashToken } from '../common/crypto';
+import { ARGON2_OPTIONS } from '../common/password';
 import { AuditService } from '../audit/audit.service';
 import { MailService, buildPasswordResetEmail, buildVerificationEmail } from '../mail/mail.service';
 import { PrismaService } from '../database/prisma.service';
@@ -24,11 +25,7 @@ export type SessionResult = {
   expiresAt: Date;
 };
 
-export const ARGON2_OPTIONS = {
-  memoryCost: 19_456,
-  timeCost: 2,
-  parallelism: 1,
-} as const;
+export { ARGON2_OPTIONS };
 
 const MAX_FAILED_ATTEMPTS = 10;
 const LOCK_DURATION_MINUTES = 15;

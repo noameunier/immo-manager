@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import {
-  countrySchema,
-  optionalFrenchPostalCodeSchema,
-  optionalText,
-  requiredText,
-  uuidSchema,
-} from './common';
+import { countrySchema, optionalText, requiredText, uuidSchema } from './common';
 
 export const createBuildingSchema = z.object({
   entityId: uuidSchema,

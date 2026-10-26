@@ -1,8 +1,9 @@
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
+import { resolve } from 'node:path';
 import { Client } from 'pg';
 
-const API_DIR = new URL('..', import.meta.url).pathname;
+const API_DIR = resolve(__dirname, '..');
 const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
   'postgresql://immo:immo_dev_only@127.0.0.1:5434/immo_test?schema=public';
