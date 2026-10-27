@@ -12,7 +12,7 @@
                         │  immo / staging-immo     │
                         └───────┬──────────┬───────┘
                                 │          │
-                     /api/*     ▼          ▼  /*
+                 /api/* (compat)▼          ▼  /*
                         ┌────────────┐  ┌───────────────┐
                         │ API NestJS │◀─│ Next.js (web) │  relais /api/* → API
                         │ 127.0.0.1  │  │  127.0.0.1    │
@@ -162,6 +162,12 @@ sans fuite d'information de volume.
 | POST             | `/properties/:id/restore`     | session | Restaurer                                                               |
 | GET              | `/dashboard/summary`          | session | Indicateurs consolidés                                                  |
 
+Toutes ces routes sont aussi servies sous le préfixe `/api` (segment retiré
+avant le routage) : un proxy qui transmet `/api/*` tel quel fonctionne sans
+configuration supplémentaire, tandis que le relais du web et le client mobile
+appellent l'API sans préfixe. Les deux formes aboutissent au même routeur et
+aux mêmes gardes.
+
 ### 5.3 Chaîne de traitement d'une requête
 
 ```text
@@ -252,10 +258,11 @@ Caddy (systemd, root)
  └─ api-staging-immo…         → 127.0.0.1:4200
 ```
 
-- Chaque vhost web envoie **tout** à Next.js, y compris `/api/*`. C'est le route
-  handler du web qui relaie vers l'API interne en retirant le préfixe. Router
-  `/api/*` directement vers l'API renvoie `Cannot POST /api/...` : l'API n'expose
-  pas ce préfixe (erreur déjà rencontrée en préproduction).
+- Chaque vhost web doit envoyer **tout** à Next.js, y compris `/api/*` : c'est
+  le route handler du web qui relaie vers l'API interne. L'API accepte
+  néanmoins le préfixe `/api` (compatibilité de proxy), si bien qu'un vhost
+  encore configuré avec `/api/* → API` reste fonctionnel ; la simplification
+  n'est donc pas urgente, mais elle évite un double chemin.
 
 - Les vhosts sont versionnés dans `infra/caddy/immo.caddy` ; le script
   `infra/bootstrap/install-caddy-import.sh` (sudo, idempotent) copie le fichier
@@ -279,7 +286,7 @@ Caddy (systemd, root)
 
 | Niveau          | Outil                          | Portée                                                |
 | --------------- | ------------------------------ | ----------------------------------------------------- |
-| Intégration API | Vitest + Supertest             | 43 tests sur `immo_test`, vraie instance HTTP         |
+| Intégration API | Vitest + Supertest             | 46 tests sur `immo_test`, vraie instance HTTP         |
 | E2E web         | Playwright                     | Parcours propriétaire complet + visiteur non connecté |
 | Types           | `tsc --noEmit`                 | API, web, mobile, shared                              |
 | Lint            | ESLint 9                       | Tous les paquets                                      |

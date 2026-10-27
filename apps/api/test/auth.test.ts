@@ -155,6 +155,40 @@ describe('Connexion et session', () => {
   });
 });
 
+describe('Compatibilité de préfixe /api (proxy)', () => {
+  it('sert les routes avec et sans le préfixe /api', async () => {
+    const user = await registerUser();
+
+    const prefixed = await api<{ user: { email: string } }>('/api/auth/login', {
+      method: 'POST',
+      body: { email: user.email, password: user.password },
+    });
+
+    expect(prefixed.status).toBe(200);
+    expect(prefixed.data.user.email).toBe(user.email);
+
+    const cookie = sessionCookieFrom(prefixed) ?? '';
+    expect(cookie).toContain('immo_session=');
+
+    const me = await api('/api/auth/me', { cookie });
+    expect(me.status).toBe(200);
+    expect((me.data as { user: { email: string } }).user.email).toBe(user.email);
+  });
+
+  it('expose aussi le contrôleur de santé derrière le préfixe', async () => {
+    const response = await api('/api/health');
+    expect(response.status).toBe(200);
+  });
+
+  it('ne retire le préfixe qu’une seule fois', async () => {
+    const unknown = await api('/api/inconnu');
+    expect(unknown.status).toBe(404);
+
+    const doubled = await api('/api/api/auth/me');
+    expect(doubled.status).toBe(404);
+  });
+});
+
 describe('Vérification email et mot de passe', () => {
   it('confirme l’adresse email à partir du lien reçu', async () => {
     const email = `verif-${randomUUID()}@example.com`;

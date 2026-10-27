@@ -95,7 +95,7 @@ pnpm db:up        # services Docker de développement
 - API : <http://127.0.0.1:4100/health>
 - Emails de développement : <http://127.0.0.1:8026> (Mailpit)
 
-Le web relaie `/api/*` vers l'API interne via un route handler Next.js. Le navigateur ne voit qu'une seule origine : cookies `httpOnly` first-party, aucun CORS.
+Le web relaie `/api/*` vers l'API interne via un route handler Next.js. Le navigateur ne voit qu'une seule origine : cookies `httpOnly` first-party, aucun CORS. L'API accepte aussi un préfixe `/api` (segment retiré avant routage) : un proxy qui transmet `/api/*` tel quel reste fonctionnel.
 
 ### Application mobile
 

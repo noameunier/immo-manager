@@ -50,7 +50,7 @@ mauvaise instance).
 | API            | NestJS 11.2.8, Prisma 7.10.1, PostgreSQL 17                  |
 | Web            | Next.js 16.4.3, React 19.3.1, Tailwind 4.3.3                 |
 | Mobile         | Expo SDK 58, React Native 0.88, expo-router 58               |
-| Tests API      | **43/43 verts** (vitest + supertest, vraie base `immo_test`) |
+| Tests API      | **46/46 verts** (vitest + supertest, vraie base `immo_test`) |
 | Tests partagés | **20/20 verts** (schémas Zod, Luhn, normalisation)           |
 | Tests E2E      | **2/2 verts** (Playwright, Chromium)                         |
 | Builds         | API, web et bundle Android Expo : OK                         |
@@ -111,7 +111,7 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
 
 ### 3.5 Tests
 
-- `apps/api/test/` : 5 fichiers, 43 tests — auth 16, entités 6, immeubles 6,
+- `apps/api/test/` : 5 fichiers, 46 tests — auth 19, entités 6, immeubles 6,
   biens 11, tableau de bord 4. Vraie instance HTTP, vraie base, aucun mock Prisma.
 - `packages/shared/src/common.test.ts` : 20 tests sur les schémas partagés
   (Luhn SIREN/SIRET, email, mot de passe, code postal, conversions de formulaire).
@@ -167,44 +167,46 @@ Deux échecs de CI ont été diagnostiqués puis corrigés :
 
 ## 5. Vérifications réellement exécutées
 
-| Commande                                      | Résultat                                                                              | Date       |
-| --------------------------------------------- | ------------------------------------------------------------------------------------- | ---------- |
-| `pnpm --filter @immo/api test`                | 43 tests passés, 21 s                                                                 | 26/10/2026 |
-| `pnpm --filter @immo/shared test`             | 20 tests passés                                                                       | 26/10/2026 |
-| `pnpm --filter @immo/web test:e2e`            | 2 tests passés                                                                        | 26/10/2026 |
-| `pnpm --filter @immo/web build`               | 17 routes, succès                                                                     | 26/10/2026 |
-| `pnpm --filter @immo/mobile build`            | bundle Android 3,2 Mo                                                                 | 26/10/2026 |
-| `pnpm typecheck` (api, web, mobile, shared)   | 0 erreur                                                                              | 26/10/2026 |
-| `pnpm lint`                                   | 0 erreur, 0 avertissement                                                             | 26/10/2026 |
-| `pnpm --filter @immo/api db:seed`             | 2 entités, 1 immeuble, 4 biens                                                        | 26/10/2026 |
-| Smoke web via `/api`                          | inscription, cookie, création, rendu, redirection                                     | 26/10/2026 |
-| Préproduction réelle (port 4200)              | inscription → 403 avant vérification → email Mailpit → vérification → tableau de bord | 26/10/2026 |
-| `infra/backup/backup-immo.sh`                 | dump chiffré age (30 Kio) + empreinte SHA-256                                         | 26/10/2026 |
-| `infra/backup/restore-immo.sh`                | restauration dans `immo_restore` vérifiée (1 utilisateur)                             | 26/10/2026 |
-| Services systemd utilisateur                  | 4 services actifs, ports 3100/3200/4100/4200 en 127.0.0.1                             | 26/10/2026 |
-| `install-caddy-import.sh` (validation locale) | `caddy validate` du fichier de vhosts : valide                                        | 26/10/2026 |
-| Simulation CI en clone neuf                   | install, lint, types et 43 tests verts avec `NODE_ENV=test`                           | 26/10/2026 |
-| Garde-fou du port de test                     | message explicite si 4200 est occupé, au lieu de tests contre une autre instance      | 26/10/2026 |
-| GitHub Actions `main` (`d3b219d`)             | job `checks` vert (lint, types, 43 tests, builds) et job Playwright vert (2 tests)    | 26/10/2026 |
-| HTTPS public (4 vhosts)                       | certificats émis, `https://immo…` et `https://staging-immo…` → 307 `/connexion`, HSTS | 26/10/2026 |
-| API mobile publique                           | `https://api-staging-immo…/health` → 200, `POST /auth/login` → 400 attendu            | 26/10/2026 |
-| Relais web local (`/api/auth/login`)          | 400 (validation) sur 3100 et 3200, jamais 404                                         | 27/10/2026 |
-| `caddy adapt` après correction du routage     | valide : chaque vhost web n'a qu'un upstream Next (3100/3200)                         | 27/10/2026 |
+| Commande                                      | Résultat                                                                                                                          | Date       |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `pnpm --filter @immo/api test`                | 43 tests passés, 21 s                                                                                                             | 26/10/2026 |
+| `pnpm --filter @immo/shared test`             | 20 tests passés                                                                                                                   | 26/10/2026 |
+| `pnpm --filter @immo/web test:e2e`            | 2 tests passés                                                                                                                    | 26/10/2026 |
+| `pnpm --filter @immo/web build`               | 17 routes, succès                                                                                                                 | 26/10/2026 |
+| `pnpm --filter @immo/mobile build`            | bundle Android 3,2 Mo                                                                                                             | 26/10/2026 |
+| `pnpm typecheck` (api, web, mobile, shared)   | 0 erreur                                                                                                                          | 26/10/2026 |
+| `pnpm lint`                                   | 0 erreur, 0 avertissement                                                                                                         | 26/10/2026 |
+| `pnpm --filter @immo/api db:seed`             | 2 entités, 1 immeuble, 4 biens                                                                                                    | 26/10/2026 |
+| Smoke web via `/api`                          | inscription, cookie, création, rendu, redirection                                                                                 | 26/10/2026 |
+| Préproduction réelle (port 4200)              | inscription → 403 avant vérification → email Mailpit → vérification → tableau de bord                                             | 26/10/2026 |
+| `infra/backup/backup-immo.sh`                 | dump chiffré age (30 Kio) + empreinte SHA-256                                                                                     | 26/10/2026 |
+| `infra/backup/restore-immo.sh`                | restauration dans `immo_restore` vérifiée (1 utilisateur)                                                                         | 26/10/2026 |
+| Services systemd utilisateur                  | 4 services actifs, ports 3100/3200/4100/4200 en 127.0.0.1                                                                         | 26/10/2026 |
+| `install-caddy-import.sh` (validation locale) | `caddy validate` du fichier de vhosts : valide                                                                                    | 26/10/2026 |
+| Simulation CI en clone neuf                   | install, lint, types et 43 tests verts avec `NODE_ENV=test`                                                                       | 26/10/2026 |
+| Garde-fou du port de test                     | message explicite si 4200 est occupé, au lieu de tests contre une autre instance                                                  | 26/10/2026 |
+| GitHub Actions `main` (`d3b219d`)             | job `checks` vert (lint, types, 43 tests, builds) et job Playwright vert (2 tests)                                                | 26/10/2026 |
+| HTTPS public (4 vhosts)                       | certificats émis, `https://immo…` et `https://staging-immo…` → 307 `/connexion`, HSTS                                             | 26/10/2026 |
+| API mobile publique                           | `https://api-staging-immo…/health` → 200, `POST /auth/login` → 400 attendu                                                        | 26/10/2026 |
+| Relais web local (`/api/auth/login`)          | 400 (validation) sur 3100 et 3200, jamais 404                                                                                     | 27/10/2026 |
+| `caddy adapt` après correction du routage     | valide : chaque vhost web n'a qu'un upstream Next (3100/3200)                                                                     | 27/10/2026 |
+| Préfixe `/api` accepté par l'API              | 46 tests verts, dont 3 dédiés (`/api/auth/*`, `/api/health`, non-répétition)                                                      | 27/10/2026 |
+| Connexion publique dev (`/api/auth/login`)    | 200, cookie posé, `/api/auth/me` 200, `dashboard/summary` 200, page authentifiée 200                                              | 27/10/2026 |
+| Parcours public préproduction (HTTPS)         | inscription 201 → email Mailpit → vérification 200 → connexion 200 → création 201 (CSRF OK) → archivage 200 → tableau de bord 200 | 27/10/2026 |
 
-Ce qui **n'a pas** été vérifié : `POST https://…/api/auth/login` après
-resynchronisation de Caddy (action humaine ci-dessous), envoi d'email réel via
-Brevo, application mobile sur appareil physique, sauvegarde distante (remote
-rclone non configuré).
+Ce qui **n'a pas** été vérifié : envoi d'email réel via Brevo, application mobile
+sur appareil physique, sauvegarde distante (remote rclone non configuré), rendu
+visuel dans un navigateur réel (les parcours ont été validés en HTTP).
 
 ## 6. Blocages et dépendances humaines
 
-| Blocage                         | Impact                        | Ce qu'il faut                                                                                                                       |
-| ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Routage Caddy à resynchroniser  | `/api/*` public encore en 404 | `sudo bash infra/bootstrap/install-caddy-import.sh` (idempotent : recopie `infra/caddy/immo.caddy`) puis retester `/api/auth/login` |
-| Clé Brevo absente               | Emails réels impossibles      | Fournir `MAIL_API_KEY` et passer `MAIL_PROVIDER=brevo` dans `~/.secrets/immo-manager/staging-api.env`                               |
-| Remote rclone non configuré     | Sauvegarde distante inactive  | `rclone config` pour créer un remote nommé `immo-backup`, puis renseigner `RCLONE_REMOTE`                                           |
-| Pas d'émulateur Android / KVM   | Mobile non testé sur appareil | Tester via Expo Go sur un téléphone, ou fournir un appareil                                                                         |
-| `backup-vps` global non vérifié | Couverture incertaine         | La sauvegarde projet autonome (testée) remplace cette dépendance                                                                    |
+| Blocage                           | Impact                        | Ce qu'il faut                                                                                                                   |
+| --------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Caddy à simplifier (non bloquant) | Double chemin `/api/*`        | `sudo bash infra/bootstrap/install-caddy-import.sh` quand un poste est disponible : chaque vhost web n'aura plus qu'un upstream |
+| Clé Brevo absente                 | Emails réels impossibles      | Fournir `MAIL_API_KEY` et passer `MAIL_PROVIDER=brevo` dans `~/.secrets/immo-manager/staging-api.env`                           |
+| Remote rclone non configuré       | Sauvegarde distante inactive  | `rclone config` pour créer un remote nommé `immo-backup`, puis renseigner `RCLONE_REMOTE`                                       |
+| Pas d'émulateur Android / KVM     | Mobile non testé sur appareil | Tester via Expo Go sur un téléphone, ou fournir un appareil                                                                     |
+| `backup-vps` global non vérifié   | Couverture incertaine         | La sauvegarde projet autonome (testée) remplace cette dépendance                                                                |
 
 Aucun de ces blocages n'empêche le développement local ni les tests.
 
@@ -213,15 +215,14 @@ Aucun de ces blocages n'empêche le développement local ni les tests.
 1. **Vérifier la CI** : elle est verte sur `main` (`checks` + Playwright). En cas
    d'échec futur, lire les **annotations** du job (API GitHub publique), elles
    contiennent les lignes d'échec essentielles.
-2. **Faire resynchroniser Caddy** (action humaine, idempotente) pour appliquer
-   la correction de routage : `sudo bash infra/bootstrap/install-caddy-import.sh`.
-   Chaque vhost web envoie désormais **tout** à Next.js ; c'est le relais
-   `/api/*` du web qui joint l'API interne.
-3. **Vérifier le routage public** :
-   `curl -fsS https://api-staging-immo.noameunier.fr/health`,
-   `curl -s -o /dev/null -w '%{http_code}\n' -X POST https://immo.noameunier.fr/api/auth/login -H 'content-type: application/json' -d '{"email":"x@y.z","password":"aaaaaaaaaaaa"}'`
-   (attendu : 400 de validation, plus jamais 404 `Cannot POST`), puis la page
-   `https://immo.noameunier.fr/connexion` et une connexion réelle.
+2. **Le site public fonctionne sans action humaine** : l'API accepte le préfixe
+   `/api`, donc la configuration Caddy actuelle (`/api/*` → API) suffit.
+   Connexion et parcours de préproduction vérifiés en HTTPS le 27/10/2026.
+3. **Simplifier Caddy quand un poste est disponible** (non bloquant) :
+   `sudo bash infra/bootstrap/install-caddy-import.sh`. Chaque vhost web
+   n'aura plus qu'un upstream (Next.js) et `/api/*` passera par le relais Next
+   au lieu d'atteindre directement l'API. Revalider ensuite
+   `POST https://immo.noameunier.fr/api/auth/login` (attendu : 400 de validation).
 4. **Configurer Brevo** : renseigner `MAIL_PROVIDER=brevo` et `MAIL_API_KEY`
    dans `~/.secrets/immo-manager/staging-api.env`, puis
    `systemctl --user restart immo-staging-api`. Tester inscription,
@@ -279,11 +280,12 @@ immo-staging-api`) avant `pnpm test`, sinon le script refuse de démarrer —
 - **Vitest 5 / Vite 8** : ne jamais lire `error.stack` dans le `globalSetup`.
   Le formateur de piles de Vite plante (`code.charCodeAt is not a function`) et
   masque complètement la cause réelle. Imprimer `error.message` suffit.
-- **Ne jamais router `/api/*` directement vers l'API NestJS** dans Caddy :
-  l'API n'expose pas ce préfixe, la requête publique finit en
-  `Cannot POST /api/auth/login` (404) alors que l'API directe répond. Chaque
-  vhost web ne doit avoir qu'un upstream : le web Next.js (3100/3200), dont le
-  route handler retire `/api` et relaie vers `API_INTERNAL_URL`.
+- **Préfixe `/api`** : l'API retire elle-même un éventuel segment `/api` avant
+  le routage (compatibilité de proxy), et le relais Next fait de même. Les deux
+  chemins aboutissent au même routeur, mais un seul suffit : à terme, chaque
+  vhost web ne doit avoir qu'un upstream, le web Next.js (3100/3200). Sans ce
+  retrait, un vhost qui transmet `/api/*` à l'API renvoie
+  `Cannot POST /api/auth/login` (404) alors que l'API directe répond.
 - **Vhosts Caddy** : ne pas lier `/etc/caddy/immo.caddy` vers le dépôt.
   `/home/dev` est en 700 : `caddy validate` (root) réussit mais le rechargement
   échoue. Le script d'installation copie le fichier ; le relancer après chaque
@@ -312,4 +314,6 @@ Le script `prisma/seed.ts` refuse de s'exécuter si `NODE_ENV=production`.
 | 26/10/2026 | Application mobile Expo, documentation, infrastructure, CI         |
 | 26/10/2026 | CI verte : tests API, builds et parcours Playwright                |
 | 26/10/2026 | HTTPS public actif sur les 4 vhosts (DNS + Caddy branchés)         |
-| 27/10/2026 | Routage Caddy corrigé : tout `/api/*` passe par le relais Next.js  |
+| 27/10/2026 | Routage Caddy corrigé dans le dépôt (à appliquer sans urgence)     |
+| 27/10/2026 | API compatible `/api/*` : site public rétabli sans sudo            |
+| 27/10/2026 | Parcours préproduction validé en HTTPS (inscription → tableau)     |
