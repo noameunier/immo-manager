@@ -271,6 +271,11 @@ pnpm backup                                  # sauvegarde chiffrée
 - **Ports** : 3100 web, 4100 API, 4200 API de test, 3200 web préprod,
   5434 base dev, 5435 base préprod, 1026/8026 Mailpit. Ne jamais utiliser
   4000, 5433, 8080, 1025, 8025 (autre projet).
+- **`WEB_ORIGIN`** : doit lister **toutes** les origines navigateur séparées par
+  des virgules (local, publique). Une origine absente provoque un 403
+  `CSRF_REJECTED` sur les mutations authentifiées par cookie, alors que la
+  connexion réussit. L'API de développement expose donc `localhost:3100` et
+  `https://immo.noameunier.fr`, avec `TRUST_PROXY=true`.
 - **Tests d'intégration** : le port 4200 doit être libre. Les services systemd
   de préproduction occupent 4200 : les arrêter (`systemctl --user stop
 immo-staging-api`) avant `pnpm test`, sinon le script refuse de démarrer —
