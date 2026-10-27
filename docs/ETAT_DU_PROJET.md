@@ -221,6 +221,7 @@ Deux échecs de CI ont été diagnostiqués puis corrigés :
 | Règles métier des baux | chevauchement refusé, dates validées, occupation synchronisée, isolation croisée | 27/10/2026 |
 | Préproduction avec jeu de démonstration | 2 locataires, 3 baux actifs, 2 380 €/mois, pages baux et locataires en 200 | 27/10/2026 |
 | GitHub Actions `main` (`2589a46`) | job `checks` vert (lint, types, 65 tests, builds) et job Playwright vert (2 tests) | 27/10/2026 |
+
 Ce qui **n'a pas** été vérifié : envoi d'email réel via Brevo, application mobile
 sur appareil physique, sauvegarde distante (remote rclone non configuré), rendu
 visuel dans un navigateur réel (les parcours ont été validés en HTTP et par
