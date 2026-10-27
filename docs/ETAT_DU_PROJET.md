@@ -1,6 +1,6 @@
 # État du projet — Immo Manager
 
-> **Dernière mise à jour : 27 octobre 2026.**
+> **Dernière mise à jour : 27 octobre 2026 (soir).**
 > Ce document est la référence pour reprendre le travail. Il décrit ce qui est
 > réellement fait, ce qui est vérifié, ce qui est bloqué et par quoi commencer.
 > En cas de doute : ce fichier, puis [`ARCHITECTURE.md`](ARCHITECTURE.md).
@@ -44,14 +44,14 @@ mauvaise instance).
 
 | Élément        | Valeur                                                       |
 | -------------- | ------------------------------------------------------------ |
-| Phase          | Phase 1 — fonctionnellement complète, clôture en cours       |
+| Phase          | Phase 1 clôturée côté code ; phase 2 démarrée (baux livrés)  |
 | Dépôt          | `github.com/noameunier/immo-manager` (public)                |
 | Branche        | `main`, à jour et poussée                                    |
 | API            | NestJS 11.2.8, Prisma 7.10.1, PostgreSQL 17                  |
 | Web            | Next.js 16.4.3, React 19.3.1, Tailwind 4.3.3                 |
 | Mobile         | Expo SDK 58, React Native 0.88, expo-router 58               |
-| Tests API      | **46/46 verts** (vitest + supertest, vraie base `immo_test`) |
-| Tests partagés | **20/20 verts** (schémas Zod, Luhn, normalisation)           |
+| Tests API      | **65/65 verts** (vitest + supertest, vraie base `immo_test`) |
+| Tests partagés | **27/27 verts** (schémas Zod, Luhn, baux, statuts)           |
 | Tests E2E      | **2/2 verts** (Playwright, Chromium)                         |
 | Builds         | API, web et bundle Android Expo : OK                         |
 | Lint / types   | Tous les paquets : OK                                        |
@@ -90,10 +90,12 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
 
 ### 3.3 Web
 
-- 16 pages : accueil, connexion, inscription, mot de passe oublié,
+- 28 pages : accueil, connexion, inscription, mot de passe oublié,
   réinitialisation, vérification email, tableau de bord, entités
   (liste / détail / création / édition), immeubles (idem), biens (idem),
-  profil, 404.
+  locataires (idem), baux (idem), profil, 404.
+- Tableau de bord enrichi : locataires, baux actifs / à venir / à échéance sous
+  60 jours, loyer mensuel total (loyer + charges).
 - Interface française, responsive, navigation clavier, messages d'erreur
   champ par champ issus des schémas partagés.
 - Same-origin : relais `/api/*` → API interne via route handler lisant
@@ -111,10 +113,12 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
 
 ### 3.5 Tests
 
-- `apps/api/test/` : 5 fichiers, 46 tests — auth 19, entités 6, immeubles 6,
-  biens 11, tableau de bord 4. Vraie instance HTTP, vraie base, aucun mock Prisma.
-- `packages/shared/src/common.test.ts` : 20 tests sur les schémas partagés
-  (Luhn SIREN/SIRET, email, mot de passe, code postal, conversions de formulaire).
+- `apps/api/test/` : 7 fichiers, 65 tests — auth 19, entités 6, immeubles 6,
+  biens 11, locataires 6, baux 13, tableau de bord 4. Vraie instance HTTP, vraie
+  base, aucun mock Prisma.
+- `packages/shared/src/common.test.ts` et `lease.test.ts` : 27 tests sur les
+  schémas partagés (Luhn SIREN/SIRET, email, mot de passe, code postal,
+  conversions de formulaire, dates, montants, statuts de bail).
 - `apps/web/e2e/` : parcours propriétaire complet + redirection d'un visiteur.
 - Isolation croisée testée : lecture, écriture, archivage, restauration,
   rattachement → 404.
@@ -135,6 +139,22 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
   réelles ont été validées.
 - CI GitHub Actions : lint, types, tests API, builds (dont bundle mobile) et
   parcours Playwright.
+
+### 3.7 Exploitation locative (phase 2, lots 2.1 et 2.2)
+
+- Locataires : particulier ou société, coordonnées, adresse, notes, archivage.
+- Baux : entité bailleur, bien, locataire, type (nu / meublé), dates de début et
+  de fin, loyer, charges, dépôt de garantie, jour d'échéance, notes.
+- Statut calculé : actif, à venir, terminé, archivé (jamais stocké).
+- Règles appliquées côté API : un seul bail non archivé par bien et par période,
+  date de fin postérieure au début, bien rattaché à l'entité bailleur, locataire
+  et bien non archivés.
+- Le bien passe automatiquement en « occupé » quand un bail actif existe et
+  redevient « vacant » à la fin du dernier bail.
+- Fiche bien : bail en cours ou à venir, avec lien et création préremplie.
+- Fiche locataire : historique complet de ses baux.
+- Tableau de bord : locataires, baux actifs / à venir / à échéance, loyers.
+- Jeu de démonstration : 2 locataires et 3 baux actifs sur le patrimoine existant.
 
 ## 4. Commits notables
 
@@ -194,9 +214,13 @@ Deux échecs de CI ont été diagnostiqués puis corrigés :
 | Connexion publique dev (`/api/auth/login`)    | 200, cookie posé, `/api/auth/me` 200, `dashboard/summary` 200, page authentifiée 200                                              | 27/10/2026 |
 | Parcours public préproduction (HTTPS)         | inscription 201 → email Mailpit → vérification 200 → connexion 200 → création 201 (CSRF OK) → archivage 200 → tableau de bord 200 | 27/10/2026 |
 
+| Phase 2 — locataires et baux | 65 tests API + 27 tests partagés + 2 E2E, tous verts | 27/10/2026 |
+| Règles métier des baux | chevauchement refusé, dates validées, occupation synchronisée, isolation croisée | 27/10/2026 |
+| Préproduction avec jeu de démonstration | 2 locataires, 3 baux actifs, 2 380 €/mois, pages baux et locataires en 200 | 27/10/2026 |
 Ce qui **n'a pas** été vérifié : envoi d'email réel via Brevo, application mobile
 sur appareil physique, sauvegarde distante (remote rclone non configuré), rendu
-visuel dans un navigateur réel (les parcours ont été validés en HTTP).
+visuel dans un navigateur réel (les parcours ont été validés en HTTP et par
+Playwright sur Chromium).
 
 ## 6. Blocages et dépendances humaines
 
@@ -218,23 +242,25 @@ Aucun de ces blocages n'empêche le développement local ni les tests.
 2. **Le site public fonctionne sans action humaine** : l'API accepte le préfixe
    `/api`, donc la configuration Caddy actuelle (`/api/*` → API) suffit.
    Connexion et parcours de préproduction vérifiés en HTTPS le 27/10/2026.
-3. **Simplifier Caddy quand un poste est disponible** (non bloquant) :
+3. **Livrer le suivi des loyers** (lot 2.4) : échéances mensuelles par bail,
+   statut encaissé / en retard / impayé, marquage des paiements, puis quittances.
+4. **Simplifier Caddy quand un poste est disponible** (non bloquant) :
    `sudo bash infra/bootstrap/install-caddy-import.sh`. Chaque vhost web
    n'aura plus qu'un upstream (Next.js) et `/api/*` passera par le relais Next
    au lieu d'atteindre directement l'API. Revalider ensuite
    `POST https://immo.noameunier.fr/api/auth/login` (attendu : 400 de validation).
-4. **Configurer Brevo** : renseigner `MAIL_PROVIDER=brevo` et `MAIL_API_KEY`
+5. **Configurer Brevo** : renseigner `MAIL_PROVIDER=brevo` et `MAIL_API_KEY`
    dans `~/.secrets/immo-manager/staging-api.env`, puis
    `systemctl --user restart immo-staging-api`. Tester inscription,
    vérification email et réinitialisation avec une adresse réelle.
-5. **Activer la sauvegarde distante** : `rclone config` (remote `immo-backup`),
+6. **Activer la sauvegarde distante** : `rclone config` (remote `immo-backup`),
    renseigner `RCLONE_REMOTE` dans `backup.env`, puis exécuter
    `pnpm backup` et vérifier la présence de l'archive distante.
    Planifier la tâche cron quotidienne (voir `infra/README.md`).
-6. **Tester le mobile** via Expo Go :
+7. **Tester le mobile** via Expo Go :
    `EXPO_PUBLIC_API_URL=https://api-staging-immo.noameunier.fr pnpm dev:mobile`.
    Vérifier connexion, tableau de bord, liste et fiche d'un bien, archivage.
-7. **Valider la phase 1** avec un utilisateur réel, puis mettre à jour
+8. **Valider la phase 1** avec un utilisateur réel, puis mettre à jour
    `ROADMAP.md` et ouvrir la phase 2 (baux et loyers).
 
 Rappels d'exploitation :
@@ -276,6 +302,15 @@ pnpm backup                                  # sauvegarde chiffrée
   `CSRF_REJECTED` sur les mutations authentifiées par cookie, alors que la
   connexion réussit. L'API de développement expose donc `localhost:3100` et
   `https://immo.noameunier.fr`, avec `TRUST_PROXY=true`.
+- **Baux — statut** : ne jamais stocker le statut d'un bail. Il est calculé
+  depuis `startsOn`/`endsOn` et `archivedAt` (`computeLeaseStatus` dans
+  `@immo/shared`) ; le stocker créerait une dérive quotidienne.
+- **Baux — chevauchement** : l'unicité « un bail actif par bien » est vérifiée
+  en code (Prisma ne sait pas exprimer un index partiel). Toute nouvelle voie de
+  création ou de restauration doit repasser par `assertNoOverlap`.
+- **Baux — dates** : colonnes PostgreSQL `date`, jamais `timestamp`. Les chaînes
+  `AAAA-MM-JJ` sont converties en UTC minuit (`apps/api/src/common/dates.ts`) ;
+  ne pas mélanger les fuseaux, sinon un bail peut basculer d'un jour.
 - **Tests d'intégration** : le port 4200 doit être libre. Les services systemd
   de préproduction occupent 4200 : les arrêter (`systemctl --user stop
 immo-staging-api`) avant `pnpm test`, sinon le script refuse de démarrer —
@@ -304,7 +339,7 @@ Uniquement en développement / préproduction avec données fictives :
 ```text
 Email        : demo@immo.local
 Mot de passe : DemoImmo2026!
-Contenu      : 2 entités, 1 immeuble, 4 biens
+Contenu      : 2 entités, 1 immeuble, 4 biens, 2 locataires, 3 baux actifs
 ```
 
 Le script `prisma/seed.ts` refuse de s'exécuter si `NODE_ENV=production`.
@@ -322,3 +357,5 @@ Le script `prisma/seed.ts` refuse de s'exécuter si `NODE_ENV=production`.
 | 27/10/2026 | Routage Caddy corrigé dans le dépôt (à appliquer sans urgence)     |
 | 27/10/2026 | API compatible `/api/*` : site public rétabli sans sudo            |
 | 27/10/2026 | Parcours préproduction validé en HTTPS (inscription → tableau)     |
+| 27/10/2026 | Phase 2 : locataires et baux livrés, 65 tests API, E2E étendu      |
+| 27/10/2026 | Préproduction migrée et peuplée : 2 locataires, 3 baux actifs      |

@@ -11,6 +11,8 @@ const NAV_ITEMS = [
   { href: '/entites', label: 'Entités' },
   { href: '/immeubles', label: 'Immeubles' },
   { href: '/biens', label: 'Biens' },
+  { href: '/locataires', label: 'Locataires' },
+  { href: '/baux', label: 'Baux' },
   { href: '/profil', label: 'Profil' },
 ];
 

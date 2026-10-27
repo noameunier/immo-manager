@@ -1,6 +1,6 @@
 # Roadmap — Immo Manager
 
-> Dernière mise à jour : 26 octobre 2026.
+> Dernière mise à jour : 27 octobre 2026.
 > L'état réel d'avancement est tenu dans [`ETAT_DU_PROJET.md`](ETAT_DU_PROJET.md).
 
 ## Principe
@@ -10,8 +10,8 @@ Une phase n'est déclarée terminée que lorsque ses critères d'acceptation son
 vérifiés par des tests exécutés, pas seulement écrits.
 
 ```text
-Phase 1  ████████████████████░░  socle + patrimoine + web + mobile (en cours de clôture)
-Phase 2  ░░░░░░░░░░░░░░░░░░░░░░  exploitation locative (baux, loyers, documents)
+Phase 1  ████████████████████░░  socle + patrimoine + web + mobile (clôture humaine)
+Phase 2  ██████░░░░░░░░░░░░░░░░  exploitation locative (baux livrés, loyers à venir)
 Phase 3  ░░░░░░░░░░░░░░░░░░░░░░  pilotage financier et conformité
 Phase 4  ░░░░░░░░░░░░░░░░░░░░░░  collaboration et partage
 ```
@@ -38,25 +38,25 @@ consulter depuis le web et le mobile, en toute sécurité.
 | 1.13 | Sauvegarde chiffrée du projet                                                           | à livrer (script prêt, destination à configurer) |
 
 **Critères de sortie** : parcours complet fonctionnel sur les trois clients,
-43 tests d'intégration verts, E2E vert, aucune donnée d'un compte accessible
-depuis un autre compte.
+tests d'intégration verts (65 au 27/10/2026), E2E vert, aucune donnée d'un compte
+accessible depuis un autre compte.
 
 ## Phase 2 — Exploitation locative
 
 **Objectif** : gérer la vie locative des biens, pas seulement leur description.
 
-| Lot  | Contenu                                                                      |
-| ---- | ---------------------------------------------------------------------------- |
-| 2.1  | Locataires (personne physique/morale), coordonnées, historique               |
-| 2.2  | Baux : bailleur (entité), locataire, bien, dates, loyer, charges, dépôt      |
-| 2.3  | Échéanciers et quittances générées en PDF                                    |
-| 2.4  | Suivi des loyers : encaissé, en retard, impayé                               |
-| 2.5  | Documents : upload, stockage local chiffré, association à un bien ou un bail |
-| 2.6  | Photos des biens, galerie et couverture                                      |
-| 2.7  | Révision annuelle des loyers (IRL), rappels automatiques                     |
-| 2.8  | États des lieux (entrée/sortie) avec photos                                  |
-| 2.9  | Création et modification des biens depuis le mobile                          |
-| 2.10 | Pagination et recherche serveur sur toutes les listes                        |
+| Lot  | Contenu                                                                      | État    |
+| ---- | ---------------------------------------------------------------------------- | ------- |
+| 2.1  | Locataires (personne physique/morale), coordonnées, historique               | livré   |
+| 2.2  | Baux : bailleur (entité), locataire, bien, dates, loyer, charges, dépôt      | livré   |
+| 2.3  | Échéanciers et quittances générées en PDF                                    | à faire |
+| 2.4  | Suivi des loyers : encaissé, en retard, impayé                               | à faire |
+| 2.5  | Documents : upload, stockage local chiffré, association à un bien ou un bail | à faire |
+| 2.6  | Photos des biens, galerie et couverture                                      | à faire |
+| 2.7  | Révision annuelle des loyers (IRL), rappels automatiques                     | à faire |
+| 2.8  | États des lieux (entrée/sortie) avec photos                                  | à faire |
+| 2.9  | Création et modification des biens depuis le mobile                          | à faire |
+| 2.10 | Pagination et recherche serveur sur toutes les listes                        | à faire |
 
 **Critères de sortie** : un bail complet peut être créé, suivi sur 12 mois, et
 les documents associés sont consultables ; les calculs de loyer sont couverts
@@ -110,14 +110,14 @@ Ces sujets avancent en parallèle de toutes les phases :
 
 ## Jalons de livraison
 
-| Jalon | Contenu                                         | Date cible                              |
-| ----- | ----------------------------------------------- | --------------------------------------- |
-| J1    | Phase 1 fonctionnelle en local, tests verts     | atteint (26/10/2026)                    |
-| J2    | Préproduction accessible en HTTPS, emails réels | à planifier (dépend d'actions humaines) |
-| J3    | Phase 1 validée par un utilisateur réel         | à planifier                             |
-| J4    | Phase 2 — baux et loyers                        | à définir                               |
-| J5    | Phase 3 — export fiscal                         | à définir                               |
-| J6    | Phase 4 — collaboration                         | à définir                               |
+| Jalon | Contenu                                         | Date cible                               |
+| ----- | ----------------------------------------------- | ---------------------------------------- |
+| J1    | Phase 1 fonctionnelle en local, tests verts     | atteint (26/10/2026)                     |
+| J2    | Préproduction accessible en HTTPS, emails réels | à planifier (dépend d'actions humaines)  |
+| J3    | Phase 1 validée par un utilisateur réel         | à planifier                              |
+| J4    | Phase 2 — baux et loyers                        | baux livrés (27/10/2026), loyers à venir |
+| J5    | Phase 3 — export fiscal                         | à définir                                |
+| J6    | Phase 4 — collaboration                         | à définir                                |
 
 Aucune date de mise en production n'est engagée : elle dépend d'une validation
 humaine explicite, conformément aux règles du projet.

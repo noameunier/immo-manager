@@ -6,7 +6,7 @@ import {
   OWNER_ENTITY_TYPE_LABELS,
   PROPERTY_TYPE_LABELS,
 } from '@immo/shared';
-import { formatNumber, formatSurface } from '@/lib/format';
+import { formatCurrency, formatNumber, formatSurface } from '@/lib/format';
 import { serverFetch } from '@/lib/server-api';
 
 export const metadata: Metadata = { title: 'Tableau de bord' };
@@ -110,6 +110,39 @@ export default async function DashboardPage({
             <p className="mt-1 text-xs text-slate-500">Somme des surfaces renseignées</p>
           </div>
         </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Locataires"
+            value={formatNumber(summary.tenants.total)}
+            href="/locataires"
+          />
+          <StatCard
+            label="Baux actifs"
+            value={formatNumber(summary.leases.active)}
+            hint={
+              summary.leases.upcoming > 0
+                ? `${formatNumber(summary.leases.upcoming)} à venir`
+                : 'Aucun bail à venir'
+            }
+            href="/baux"
+          />
+          <StatCard
+            label="Loyer mensuel"
+            value={formatCurrency(summary.rents.monthlyTotal)}
+            hint={`${formatCurrency(summary.rents.monthlyRent)} de loyer + ${formatCurrency(
+              summary.rents.monthlyCharges,
+            )} de charges`}
+            href="/baux"
+          />
+          <div className="card p-5">
+            <p className="text-sm font-medium text-slate-500">Baux à échéance</p>
+            <p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
+              {formatNumber(summary.leases.endingSoon)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Baux actifs finissant sous 60 jours</p>
+          </div>
+        </div>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -177,6 +210,8 @@ export default async function DashboardPage({
               ['Entités', summary.archived.entities],
               ['Immeubles', summary.archived.buildings],
               ['Biens', summary.archived.properties],
+              ['Locataires', summary.archived.tenants],
+              ['Baux', summary.archived.leases],
             ].map(([label, count]) => (
               <li key={String(label)} className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-slate-600">{label}</span>

@@ -3,5 +3,7 @@ export * from './auth';
 export * from './owner-entity';
 export * from './building';
 export * from './property';
+export * from './tenant';
+export * from './lease';
 export * from './dashboard';
 export * from './labels';

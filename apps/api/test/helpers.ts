@@ -152,6 +152,64 @@ export async function createProperty(
   return response.data;
 }
 
+export async function createTenant(
+  token: string,
+  overrides: Record<string, unknown> = {},
+): Promise<{ id: string; name: string }> {
+  const suffix = randomUUID().slice(0, 8);
+  const response = await api<{ id: string; name: string }>('/tenants', {
+    method: 'POST',
+    token,
+    body: {
+      type: 'INDIVIDUAL',
+      name: `Locataire ${suffix}`,
+      email: `locataire-${suffix}@example.com`,
+      city: 'Lyon',
+      postalCode: '69003',
+      ...overrides,
+    },
+  });
+
+  if (response.status !== 201) {
+    throw new Error(`Création de locataire impossible : ${response.status}`);
+  }
+
+  return response.data;
+}
+
+export function todayDateOnly(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function createLease(
+  token: string,
+  ids: { entityId: string; propertyId: string; tenantId: string },
+  overrides: Record<string, unknown> = {},
+): Promise<{ id: string; status: string; monthlyTotal: number }> {
+  const response = await api<{ id: string; status: string; monthlyTotal: number }>('/leases', {
+    method: 'POST',
+    token,
+    body: {
+      ...ids,
+      type: 'NUE',
+      startsOn: todayDateOnly(),
+      rentAmount: 850,
+      chargesAmount: 50,
+      depositAmount: 1700,
+      paymentDay: 5,
+      ...overrides,
+    },
+  });
+
+  if (response.status !== 201) {
+    throw new Error(
+      `Création de bail impossible : ${response.status} ${JSON.stringify(response.data)}`,
+    );
+  }
+
+  return response.data;
+}
+
 /**
  * Récupère un jeton envoyé par email via l'API HTTP de Mailpit.
  * Permet de tester la vérification d'email de bout en bout, sans exposer

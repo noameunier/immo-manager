@@ -5,21 +5,34 @@ import { useState } from 'react';
 import { apiFetch, errorMessage } from '@/lib/api';
 
 type Props = {
-  resource: 'owner-entities' | 'buildings' | 'properties';
+  resource: 'owner-entities' | 'buildings' | 'properties' | 'tenants' | 'leases';
   id: string;
   archived: boolean;
   label: string;
+  /** Verbe de l'action principale (par défaut « Archiver »). */
+  actionLabel?: string;
+  restoreLabel?: string;
+  confirmMessage?: string;
 };
 
 /** Archive (suppression logique) ou restaure une ressource, puis rafraîchit la page. */
-export function ArchiveButton({ resource, id, archived, label }: Props) {
+export function ArchiveButton({
+  resource,
+  id,
+  archived,
+  label,
+  actionLabel = 'Archiver',
+  restoreLabel = 'Restaurer',
+  confirmMessage,
+}: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleClick() {
-    if (!archived && !window.confirm(`Archiver « ${label} » ? Elle restera consultable.`)) {
-      return;
+    if (!archived) {
+      const message = confirmMessage ?? `Archiver « ${label} » ? L’élément restera consultable.`;
+      if (!window.confirm(message)) return;
     }
 
     setPending(true);
@@ -44,7 +57,7 @@ export function ArchiveButton({ resource, id, archived, label }: Props) {
         disabled={pending}
         className={archived ? 'btn-secondary' : 'btn-danger'}
       >
-        {pending ? '…' : archived ? 'Restaurer' : 'Archiver'}
+        {pending ? '…' : archived ? restoreLabel : actionLabel}
       </button>
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </span>

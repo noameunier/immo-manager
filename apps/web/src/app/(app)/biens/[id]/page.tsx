@@ -1,11 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import type { Property } from '@immo/shared';
+import type { Lease, Property } from '@immo/shared';
 import { ApiError } from '@/lib/api';
 import { ArchiveButton } from '@/components/archive-button';
-import { ArchivedBadge, OccupancyBadge, PropertyTypeBadge } from '@/components/badges';
-import { formatDate, formatSurface } from '@/lib/format';
+import {
+  ArchivedBadge,
+  LeaseStatusBadge,
+  LeaseTypeBadge,
+  OccupancyBadge,
+  PropertyTypeBadge,
+} from '@/components/badges';
+import { formatCurrency, formatDate, formatSurface } from '@/lib/format';
 import { serverFetch } from '@/lib/server-api';
 
 export const metadata: Metadata = { title: 'Fiche bien' };
@@ -20,6 +26,12 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
     if (error instanceof ApiError && error.status === 404) notFound();
     throw error;
   }
+
+  const leases = await serverFetch<Lease[]>(`/leases?propertyId=${property.id}&archived=true`);
+  const currentLease =
+    leases.find((lease) => lease.status === 'ACTIVE') ??
+    leases.find((lease) => lease.status === 'UPCOMING') ??
+    null;
 
   return (
     <div className="space-y-8">
@@ -111,6 +123,51 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             </p>
           </div>
         ) : null}
+      </section>
+
+      <section className="card p-5" aria-labelledby="location">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="location" className="text-sm font-semibold text-slate-900">
+            Location
+          </h2>
+          <Link href={`/baux/nouveau?bien=${property.id}`} className="btn-secondary">
+            Créer un bail
+          </Link>
+        </div>
+
+        {currentLease ? (
+          <div className="mt-4 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/baux/${currentLease.id}`}
+                className="font-medium text-slate-900 hover:text-brand-700"
+              >
+                Bail de {currentLease.tenant?.name ?? 'locataire'}
+              </Link>
+              <LeaseTypeBadge type={currentLease.type} />
+              <LeaseStatusBadge status={currentLease.status} />
+            </div>
+            <p className="text-sm text-slate-600">
+              Du {formatDate(currentLease.startsOn)} au{' '}
+              {currentLease.endsOn ? formatDate(currentLease.endsOn) : 'terme'} ·{' '}
+              {formatCurrency(currentLease.monthlyTotal)} / mois · échéance le{' '}
+              {currentLease.paymentDay}
+            </p>
+            {leases.length > 1 ? (
+              <p className="text-xs text-slate-500">
+                {leases.length - 1} autre(s) bail(baux) dans l’historique —{' '}
+                <Link href="/baux" className="text-brand-700 hover:underline">
+                  voir tous les baux
+                </Link>
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-slate-600">
+            Aucun bail actif pour ce bien.
+            {leases.length > 0 ? ` ${leases.length} bail(baux) dans l’historique.` : ''}
+          </p>
+        )}
       </section>
 
       <section className="card p-5" aria-labelledby="adresse">

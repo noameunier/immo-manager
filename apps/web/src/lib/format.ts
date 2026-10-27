@@ -14,6 +14,12 @@ const dateTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
 
 const numberFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 
+const currencyFormatter = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  maximumFractionDigits: 2,
+});
+
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return '—';
   const date = typeof value === 'string' ? new Date(value) : value;
@@ -31,6 +37,11 @@ export function formatDateTime(value: string | Date | null | undefined): string 
 export function formatNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return '—';
   return numberFormatter.format(value);
+}
+
+export function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '—';
+  return currencyFormatter.format(value);
 }
 
 export function formatSurface(value: number | null | undefined): string {

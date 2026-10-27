@@ -7,19 +7,27 @@ import type {
 } from '@immo/shared';
 import { OCCUPANCY_STATUSES, OWNER_ENTITY_TYPES, PROPERTY_TYPES } from '@immo/shared';
 import { PrismaService } from '../database/prisma.service';
+import { addDaysToDateOnly, fromDateOnly, toDateOnly, todayDateOnly } from '../common/dates';
 
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async summary(ownerId: string): Promise<DashboardSummary> {
+    const today = todayDateOnly();
+    const soonDate = toDateOnly(addDaysToDateOnly(today, 60));
+
     const [
       entities,
       buildings,
       properties,
+      tenants,
+      leases,
       archivedEntities,
       archivedBuildings,
       archivedProperties,
+      archivedTenants,
+      archivedLeases,
     ] = await Promise.all([
       this.prisma.ownerEntity.groupBy({
         by: ['type'],
@@ -31,9 +39,16 @@ export class DashboardService {
         where: { ownerId, archivedAt: null },
         select: { type: true, occupancyStatus: true, buildingId: true, surfaceM2: true },
       }),
+      this.prisma.tenant.count({ where: { ownerId, archivedAt: null } }),
+      this.prisma.lease.findMany({
+        where: { ownerId, archivedAt: null },
+        select: { startsOn: true, endsOn: true, rentAmount: true, chargesAmount: true },
+      }),
       this.prisma.ownerEntity.count({ where: { ownerId, archivedAt: { not: null } } }),
       this.prisma.building.count({ where: { ownerId, archivedAt: { not: null } } }),
       this.prisma.property.count({ where: { ownerId, archivedAt: { not: null } } }),
+      this.prisma.tenant.count({ where: { ownerId, archivedAt: { not: null } } }),
+      this.prisma.lease.count({ where: { ownerId, archivedAt: { not: null } } }),
     ]);
 
     const byEntityType = Object.fromEntries(OWNER_ENTITY_TYPES.map((type) => [type, 0])) as Record<
@@ -64,6 +79,32 @@ export class DashboardService {
 
     const entityTotal = entities.reduce((sum, row) => sum + row._count._all, 0);
 
+    let activeLeases = 0;
+    let upcomingLeases = 0;
+    let endingSoon = 0;
+    let monthlyRent = 0;
+    let monthlyCharges = 0;
+
+    for (const lease of leases) {
+      const startsOn = fromDateOnly(lease.startsOn);
+      const endsOn = lease.endsOn ? fromDateOnly(lease.endsOn) : null;
+
+      if (startsOn > today) {
+        upcomingLeases += 1;
+        continue;
+      }
+      if (endsOn !== null && endsOn < today) continue;
+
+      activeLeases += 1;
+      monthlyRent += Number(lease.rentAmount);
+      monthlyCharges += Number(lease.chargesAmount);
+      if (endsOn !== null && lease.endsOn !== null && lease.endsOn <= soonDate) {
+        endingSoon += 1;
+      }
+    }
+
+    const round = (value: number): number => Math.round(value * 100) / 100;
+
     return {
       entities: { total: entityTotal, byType: byEntityType },
       buildings: { total: buildings },
@@ -75,10 +116,19 @@ export class DashboardService {
         byOccupancy,
         totalSurfaceM2: Math.round(totalSurface * 100) / 100,
       },
+      tenants: { total: tenants },
+      leases: { active: activeLeases, upcoming: upcomingLeases, endingSoon },
+      rents: {
+        monthlyRent: round(monthlyRent),
+        monthlyCharges: round(monthlyCharges),
+        monthlyTotal: round(monthlyRent + monthlyCharges),
+      },
       archived: {
         entities: archivedEntities,
         buildings: archivedBuildings,
         properties: archivedProperties,
+        tenants: archivedTenants,
+        leases: archivedLeases,
       },
       generatedAt: new Date().toISOString(),
     };

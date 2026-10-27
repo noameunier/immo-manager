@@ -2,11 +2,11 @@
 
 Application de gestion de patrimoine immobilier pour propriétaires particuliers, SCI, sociétés et indivisions.
 
-> **État du projet : phase 1 en cours.** Le socle technique, l'API, l'authentification et la gestion du patrimoine sont fonctionnels et testés. Voir [`docs/ETAT_DU_PROJET.md`](docs/ETAT_DU_PROJET.md) pour l'état exact, les blocages et la reprise du travail.
+> **État du projet : phase 1 livrée, phase 2 démarrée.** Le socle, l'authentification, le patrimoine, les locataires et les baux sont fonctionnels et testés. Voir [`docs/ETAT_DU_PROJET.md`](docs/ETAT_DU_PROJET.md) pour l'état exact, les blocages et la reprise du travail.
 
 ## Sommaire
 
-- [Périmètre de la phase 1](#périmètre-de-la-phase-1)
+- [Périmètre livré](#périmètre-livré)
 - [Architecture](#architecture)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
@@ -17,7 +17,7 @@ Application de gestion de patrimoine immobilier pour propriétaires particuliers
 - [Sécurité](#sécurité)
 - [Documentation](#documentation)
 
-## Périmètre de la phase 1
+## Périmètre livré
 
 Parcours livré de bout en bout :
 
@@ -27,8 +27,12 @@ Parcours livré de bout en bout :
 4. Ajouter des lots rattachés à l'immeuble.
 5. Ajouter un bien indépendant (maison, garage, parking, box).
 6. Consulter, modifier et archiver ses fiches.
-7. Consulter un tableau de bord calculé à partir des données réelles.
-8. Se déconnecter.
+7. Créer des locataires (particulier ou société).
+8. Créer des baux (bailleur, bien, locataire, dates, loyer, charges, dépôt) :
+   le bien passe automatiquement en « occupé » et le tableau de bord affiche les
+   baux actifs et le loyer mensuel total.
+9. Consulter un tableau de bord calculé à partir des données réelles.
+10. Se déconnecter.
 
 Chaque propriétaire ne voit que ses propres données : l'isolation est vérifiée par des tests d'intégration et garantie au niveau base par des clés étrangères composites `(id, owner_id)`.
 

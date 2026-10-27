@@ -11,6 +11,8 @@ import { EmailVerifiedGuard } from './auth/email-verified.guard';
 import { OwnerEntitiesModule } from './owner-entities/owner-entities.module';
 import { BuildingsModule } from './buildings/buildings.module';
 import { PropertiesModule } from './properties/properties.module';
+import { TenantsModule } from './tenants/tenants.module';
+import { LeasesModule } from './leases/leases.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 
@@ -23,6 +25,8 @@ import { HealthModule } from './health/health.module';
     OwnerEntitiesModule,
     BuildingsModule,
     PropertiesModule,
+    TenantsModule,
+    LeasesModule,
     DashboardModule,
     HealthModule,
   ],

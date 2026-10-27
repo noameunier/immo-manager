@@ -83,14 +83,18 @@ User 1──n Session
 User 1──n EmailToken
 User 1──n OwnerEntity 1──n Building 1──n Property
 User 1───────────────n Property
+User 1──n Tenant 1──n Lease n──1 Property
+                    Lease n──1 OwnerEntity   (bailleur)
 User 1──n AuditLog
 User 1──n MediaAsset
 ```
 
 `OwnerEntity` porte le type juridique (`INDIVIDUAL`, `SCI`, `COMPANY`, `UNDIVIDED`).
 `Property` est soit un lot (`buildingId` renseigné), soit un bien indépendant
-(`buildingId` nul). `MediaAsset` et les colonnes TOTP sont prévues pour les phases
-suivantes mais inutilisées par l'interface actuelle.
+(`buildingId` nul). `Tenant` décrit le locataire (particulier ou société) et
+`Lease` relie un bien, un locataire et l'entité bailleur, avec ses dates, loyer,
+charges et dépôt de garantie. `MediaAsset` et les colonnes TOTP restent prévues
+pour les phases suivantes mais inutilisées par l'interface actuelle.
 
 ### 4.2 Isolation par clés composites
 
@@ -116,6 +120,9 @@ défense en profondeur, pas un remplacement du filtrage applicatif.
 Toutes les tables métier possèdent `archived_at`. Les requêtes excluent les
 éléments archivés par défaut ; `includeArchived=true` (liste) ou une lecture par
 identifiant permet de les consulter. Aucune suppression physique n'est exposée.
+Pour un bail, l'archivage signifie « bail terminé » : le statut `ACTIVE`,
+`UPCOMING`, `ENDED` ou `ARCHIVED` est calculé à la lecture à partir des dates et
+de `archived_at`, jamais stocké (aucune dérive possible).
 
 ### 4.4 Identifiants
 
@@ -140,27 +147,33 @@ sans fuite d'information de volume.
 
 ### 5.2 Routes
 
-| Méthode          | Route                         | Auth    | Rôle                                                                    |
-| ---------------- | ----------------------------- | ------- | ----------------------------------------------------------------------- |
-| GET              | `/health`                     | public  | Sonde de vie                                                            |
-| POST             | `/auth/register`              | public  | Inscription + session                                                   |
-| POST             | `/auth/login`                 | public  | Connexion + session                                                     |
-| POST             | `/auth/logout`                | session | Révocation de la session courante                                       |
-| GET              | `/auth/me`                    | session | Utilisateur + expiration de session                                     |
-| POST             | `/auth/verify-email`          | public  | Consommation d'un jeton email                                           |
-| POST             | `/auth/verification/resend`   | session | Renvoi de l'email de vérification                                       |
-| POST             | `/auth/forgot-password`       | public  | Demande de réinitialisation                                             |
-| POST             | `/auth/reset-password`        | public  | Réinitialisation + révocation des sessions                              |
-| GET/POST         | `/owner-entities`             | session | Lister (filtres `search`, `includeArchived`) / créer                    |
-| GET/PATCH/DELETE | `/owner-entities/:id`         | session | Lire / modifier / archiver                                              |
-| POST             | `/owner-entities/:id/restore` | session | Restaurer                                                               |
-| GET/POST         | `/buildings`                  | session | Lister (`entityId`, `search`, `includeArchived`) / créer                |
-| GET/PATCH/DELETE | `/buildings/:id`              | session | Lire (avec lots) / modifier / archiver                                  |
-| POST             | `/buildings/:id/restore`      | session | Restaurer                                                               |
-| GET/POST         | `/properties`                 | session | Lister (`entityId`, `buildingId`, `type`, `archived`, `search`) / créer |
-| GET/PATCH/DELETE | `/properties/:id`             | session | Lire / modifier / archiver                                              |
-| POST             | `/properties/:id/restore`     | session | Restaurer                                                               |
-| GET              | `/dashboard/summary`          | session | Indicateurs consolidés                                                  |
+| Méthode          | Route                         | Auth    | Rôle                                                                        |
+| ---------------- | ----------------------------- | ------- | --------------------------------------------------------------------------- |
+| GET              | `/health`                     | public  | Sonde de vie                                                                |
+| POST             | `/auth/register`              | public  | Inscription + session                                                       |
+| POST             | `/auth/login`                 | public  | Connexion + session                                                         |
+| POST             | `/auth/logout`                | session | Révocation de la session courante                                           |
+| GET              | `/auth/me`                    | session | Utilisateur + expiration de session                                         |
+| POST             | `/auth/verify-email`          | public  | Consommation d'un jeton email                                               |
+| POST             | `/auth/verification/resend`   | session | Renvoi de l'email de vérification                                           |
+| POST             | `/auth/forgot-password`       | public  | Demande de réinitialisation                                                 |
+| POST             | `/auth/reset-password`        | public  | Réinitialisation + révocation des sessions                                  |
+| GET/POST         | `/owner-entities`             | session | Lister (filtres `search`, `includeArchived`) / créer                        |
+| GET/PATCH/DELETE | `/owner-entities/:id`         | session | Lire / modifier / archiver                                                  |
+| POST             | `/owner-entities/:id/restore` | session | Restaurer                                                                   |
+| GET/POST         | `/buildings`                  | session | Lister (`entityId`, `search`, `includeArchived`) / créer                    |
+| GET/PATCH/DELETE | `/buildings/:id`              | session | Lire (avec lots) / modifier / archiver                                      |
+| POST             | `/buildings/:id/restore`      | session | Restaurer                                                                   |
+| GET/POST         | `/properties`                 | session | Lister (`entityId`, `buildingId`, `type`, `archived`, `search`) / créer     |
+| GET/PATCH/DELETE | `/properties/:id`             | session | Lire / modifier / archiver                                                  |
+| POST             | `/properties/:id/restore`     | session | Restaurer                                                                   |
+| GET/POST         | `/tenants`                    | session | Lister (`search`, `archived`) / créer                                       |
+| GET/PATCH/DELETE | `/tenants/:id`                | session | Lire / modifier / archiver                                                  |
+| POST             | `/tenants/:id/restore`        | session | Restaurer                                                                   |
+| GET/POST         | `/leases`                     | session | Lister (`status`, `propertyId`, `tenantId`, `entityId`, `archived`) / créer |
+| GET/PATCH/DELETE | `/leases/:id`                 | session | Lire / modifier / terminer                                                  |
+| POST             | `/leases/:id/restore`         | session | Restaurer                                                                   |
+| GET              | `/dashboard/summary`          | session | Indicateurs consolidés (patrimoine, locataires, baux, loyers)               |
 
 Toutes ces routes sont aussi servies sous le préfixe `/api` (segment retiré
 avant le routage) : un proxy qui transmet `/api/*` tel quel fonctionne sans
@@ -219,7 +232,11 @@ oublié 5/heure. En-tête de contournement `x-test-skip-rate-limit: 1` accepté
 - Erreurs API mappées vers des messages français, `details` distribués par champ.
 - Pages : `/`, `/connexion`, `/inscription`, `/mot-de-passe-oublie`,
   `/reinitialiser-mot-de-passe`, `/verifier-email`, `/tableau-de-bord`,
-  `/entites`, `/immeubles`, `/biens`, `/profil`, 404 personnalisée.
+  `/entites`, `/immeubles`, `/biens`, `/locataires`, `/baux`, `/profil`,
+  404 personnalisée. Chaque ressource a sa liste filtrable, sa fiche, son
+  formulaire de création et d'édition.
+- La fiche d'un bien affiche le bail actif ou à venir ; la fiche d'un locataire
+  liste ses baux (historique compris).
 
 ## 7. Mobile
 
@@ -286,14 +303,19 @@ Caddy (systemd, root)
 
 | Niveau          | Outil                          | Portée                                                |
 | --------------- | ------------------------------ | ----------------------------------------------------- |
-| Intégration API | Vitest + Supertest             | 46 tests sur `immo_test`, vraie instance HTTP         |
+| Intégration API | Vitest + Supertest             | 65 tests sur `immo_test`, vraie instance HTTP         |
 | E2E web         | Playwright                     | Parcours propriétaire complet + visiteur non connecté |
 | Types           | `tsc --noEmit`                 | API, web, mobile, shared                              |
 | Lint            | ESLint 9                       | Tous les paquets                                      |
 | Build           | tsc / next build / expo export | Tous les paquets                                      |
 
 Cas d'isolation couverts : lecture, modification, archivage, restauration et
-rattachement croisés entre deux propriétaires → 404 systématique.
+rattachement croisés entre deux propriétaires → 404 systématique, y compris pour
+les locataires et les baux.
+
+Règles métier testées : un seul bail non archivé par période et par bien, dates
+cohérentes, bien rattaché à l'entité bailleur, locataire non archivé, occupation
+du bien synchronisée à la création/à la fin d'un bail.
 
 Les tests d'intégration démarrent l'API compilée (`node dist/main.js`) : `tsx`
 n'émet pas `emitDecoratorMetadata`, ce qui casserait l'injection NestJS.

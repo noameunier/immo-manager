@@ -11,7 +11,16 @@ type Summary = {
     byType: Record<string, number>;
     totalSurfaceM2: number;
   };
-  archived: { entities: number; buildings: number; properties: number };
+  tenants: { total: number };
+  leases: { active: number; upcoming: number; endingSoon: number };
+  rents: { monthlyRent: number; monthlyCharges: number; monthlyTotal: number };
+  archived: {
+    entities: number;
+    buildings: number;
+    properties: number;
+    tenants: number;
+    leases: number;
+  };
 };
 
 describe('Tableau de bord', () => {
@@ -55,7 +64,16 @@ describe('Tableau de bord', () => {
     expect(response.data.properties.byType.PARKING).toBe(1);
     expect(response.data.properties.byType.HOUSE).toBe(1);
     expect(response.data.properties.totalSurfaceM2).toBe(162.5);
-    expect(response.data.archived).toEqual({ entities: 0, buildings: 0, properties: 0 });
+    expect(response.data.tenants.total).toBe(0);
+    expect(response.data.leases).toEqual({ active: 0, upcoming: 0, endingSoon: 0 });
+    expect(response.data.rents).toEqual({ monthlyRent: 0, monthlyCharges: 0, monthlyTotal: 0 });
+    expect(response.data.archived).toEqual({
+      entities: 0,
+      buildings: 0,
+      properties: 0,
+      tenants: 0,
+      leases: 0,
+    });
   });
 
   it('ne compte que les données du propriétaire connecté', async () => {

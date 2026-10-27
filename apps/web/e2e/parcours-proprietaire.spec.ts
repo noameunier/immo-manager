@@ -67,12 +67,53 @@ test('parcours propriétaire de bout en bout', async ({ page }) => {
     await expect(page.getByText('62,5 m²')).toBeVisible();
   });
 
+  await test.step('création d’un locataire', async () => {
+    await page.getByRole('link', { name: 'Locataires' }).first().click();
+    await expect(page).toHaveURL(/\/locataires$/);
+
+    await page.getByRole('link', { name: 'Ajouter un locataire' }).click();
+    await expect(page).toHaveURL(/\/locataires\/nouveau/);
+
+    await page.getByLabel('Nom complet ou raison sociale').fill('Locataire E2E');
+    await page.getByLabel('Adresse email').fill(`locataire-${stamp}@example.com`);
+    await page.getByRole('button', { name: 'Créer le locataire' }).click();
+
+    await expect(page).toHaveURL(/\/locataires\/[0-9a-f-]+$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Locataire E2E' })).toBeVisible();
+  });
+
+  await test.step('création d’un bail', async () => {
+    await page.getByRole('link', { name: 'Biens' }).first().click();
+    await page.getByRole('link', { name: 'Appartement E2E' }).click();
+    await page.getByRole('link', { name: 'Créer un bail' }).click();
+    await expect(page).toHaveURL(/\/baux\/nouveau/);
+
+    await page.getByLabel('Locataire').selectOption({ label: 'Locataire E2E' });
+    await page.getByLabel('Loyer hors charges (€)').fill('850,50');
+    await page.getByLabel('Charges (€)', { exact: true }).fill('50');
+    await page.getByRole('button', { name: 'Créer le bail' }).click();
+
+    await expect(page).toHaveURL(/\/baux\/[0-9a-f-]+$/);
+    await expect(page.getByText('Actif', { exact: true })).toBeVisible();
+    await expect(page.getByText(/900,50/)).toBeVisible();
+  });
+
+  await test.step('le bien est marqué occupé', async () => {
+    await page.getByRole('link', { name: 'Biens' }).first().click();
+    await page.getByRole('link', { name: 'Appartement E2E' }).click();
+
+    await expect(page.getByText('Occupé')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Bail de Locataire E2E' })).toBeVisible();
+  });
+
   await test.step('tableau de bord à jour', async () => {
     await page.getByRole('link', { name: 'Tableau de bord' }).first().click();
     await expect(page).toHaveURL(/\/tableau-de-bord/);
 
     await expect(page.getByText('Surface totale')).toBeVisible();
     await expect(page.getByText('62,5 m²').first()).toBeVisible();
+    await expect(page.getByText('Baux actifs', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Loyer mensuel')).toBeVisible();
   });
 
   await test.step('déconnexion', async () => {

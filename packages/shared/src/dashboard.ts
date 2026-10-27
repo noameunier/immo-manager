@@ -15,10 +15,23 @@ export type DashboardSummary = {
     byOccupancy: Record<OccupancyStatus, number>;
     totalSurfaceM2: number;
   };
+  tenants: { total: number };
+  leases: {
+    active: number;
+    upcoming: number;
+    endingSoon: number;
+  };
+  rents: {
+    monthlyRent: number;
+    monthlyCharges: number;
+    monthlyTotal: number;
+  };
   archived: {
     entities: number;
     buildings: number;
     properties: number;
+    tenants: number;
+    leases: number;
   };
   generatedAt: string;
 };
