@@ -1,6 +1,6 @@
 # État du projet — Immo Manager
 
-> **Dernière mise à jour : 26 octobre 2026 (soir).**
+> **Dernière mise à jour : 27 octobre 2026.**
 > Ce document est la référence pour reprendre le travail. Il décrit ce qui est
 > réellement fait, ce qui est vérifié, ce qui est bloqué et par quoi commencer.
 > En cas de doute : ce fichier, puis [`ARCHITECTURE.md`](ARCHITECTURE.md).
@@ -123,8 +123,9 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
 
 - `README.md`, `AGENTS.md`, ce fichier, `CAHIER_DES_CHARGES.md`,
   `ARCHITECTURE.md`, `ROADMAP.md`, `infra/README.md`.
-- `infra/caddy/immo.caddy` (4 vhosts), `infra/bootstrap/install-caddy-import.sh`
-  (sudo, idempotent, copie vers `/etc/caddy` puis rechargement), `install-user-services.sh`.
+- `infra/caddy/immo.caddy` (4 vhosts ; les vhosts web envoient tout à Next.js,
+  `/api/*` compris), `infra/bootstrap/install-caddy-import.sh` (sudo, idempotent,
+  copie vers `/etc/caddy` puis rechargement), `install-user-services.sh`.
 - 4 unités systemd utilisateur (API/web, dev/préproduction), installées et
   actives sur le VPS, toutes liées à `127.0.0.1`.
 - `infra/docker/docker-compose.staging.yml` (PostgreSQL 5435).
@@ -149,6 +150,8 @@ f445c55  style: uniformiser le formatage Prettier sur le dépôt
 deebc4a  fix: fiabiliser les tests d'intégration et le diagnostic CI
 de56a25  feat: relayer l'API à l'exécution et valider la préproduction
 d3b219d  fix: construire le web en mode production dans la CI
+57bf7d5  test: stabiliser le parcours Playwright et le diagnostic CI
+737e8e0  fix: copier les vhosts Caddy au lieu de les lier
 ```
 
 Deux échecs de CI ont été diagnostiqués puis corrigés :
@@ -183,21 +186,25 @@ Deux échecs de CI ont été diagnostiqués puis corrigés :
 | Simulation CI en clone neuf                   | install, lint, types et 43 tests verts avec `NODE_ENV=test`                           | 26/10/2026 |
 | Garde-fou du port de test                     | message explicite si 4200 est occupé, au lieu de tests contre une autre instance      | 26/10/2026 |
 | GitHub Actions `main` (`d3b219d`)             | job `checks` vert (lint, types, 43 tests, builds) et job Playwright vert (2 tests)    | 26/10/2026 |
+| HTTPS public (4 vhosts)                       | certificats émis, `https://immo…` et `https://staging-immo…` → 307 `/connexion`, HSTS | 26/10/2026 |
+| API mobile publique                           | `https://api-staging-immo…/health` → 200, `POST /auth/login` → 400 attendu            | 26/10/2026 |
+| Relais web local (`/api/auth/login`)          | 400 (validation) sur 3100 et 3200, jamais 404                                         | 27/10/2026 |
+| `caddy adapt` après correction du routage     | valide : chaque vhost web n'a qu'un upstream Next (3100/3200)                         | 27/10/2026 |
 
-Ce qui **n'a pas** été vérifié : exposition HTTPS publique (DNS et Caddy en
-attente), envoi d'email réel via Brevo, application mobile sur appareil
-physique, sauvegarde distante (remote rclone non configuré).
+Ce qui **n'a pas** été vérifié : `POST https://…/api/auth/login` après
+resynchronisation de Caddy (action humaine ci-dessous), envoi d'email réel via
+Brevo, application mobile sur appareil physique, sauvegarde distante (remote
+rclone non configuré).
 
 ## 6. Blocages et dépendances humaines
 
-| Blocage                         | Impact                        | Ce qu'il faut                                                                                                                 |
-| ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| DNS non créé                    | Aucun accès HTTPS public      | Créer 4 enregistrements A (TTL 300, sans Alias) vers `45.155.171.57` : `immo`, `api-immo`, `staging-immo`, `api-staging-immo` |
-| Caddy non branché               | Vhosts absents du Caddyfile   | `sudo bash infra/bootstrap/install-caddy-import.sh` (une fois)                                                                |
-| Clé Brevo absente               | Emails réels impossibles      | Fournir `MAIL_API_KEY` et passer `MAIL_PROVIDER=brevo` dans `~/.secrets/immo-manager/staging-api.env`                         |
-| Remote rclone non configuré     | Sauvegarde distante inactive  | `rclone config` pour créer un remote nommé `immo-backup`, puis renseigner `RCLONE_REMOTE`                                     |
-| Pas d'émulateur Android / KVM   | Mobile non testé sur appareil | Tester via Expo Go sur un téléphone, ou fournir un appareil                                                                   |
-| `backup-vps` global non vérifié | Couverture incertaine         | La sauvegarde projet autonome (testée) remplace cette dépendance                                                              |
+| Blocage                         | Impact                        | Ce qu'il faut                                                                                                                       |
+| ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Routage Caddy à resynchroniser  | `/api/*` public encore en 404 | `sudo bash infra/bootstrap/install-caddy-import.sh` (idempotent : recopie `infra/caddy/immo.caddy`) puis retester `/api/auth/login` |
+| Clé Brevo absente               | Emails réels impossibles      | Fournir `MAIL_API_KEY` et passer `MAIL_PROVIDER=brevo` dans `~/.secrets/immo-manager/staging-api.env`                               |
+| Remote rclone non configuré     | Sauvegarde distante inactive  | `rclone config` pour créer un remote nommé `immo-backup`, puis renseigner `RCLONE_REMOTE`                                           |
+| Pas d'émulateur Android / KVM   | Mobile non testé sur appareil | Tester via Expo Go sur un téléphone, ou fournir un appareil                                                                         |
+| `backup-vps` global non vérifié | Couverture incertaine         | La sauvegarde projet autonome (testée) remplace cette dépendance                                                                    |
 
 Aucun de ces blocages n'empêche le développement local ni les tests.
 
@@ -206,13 +213,15 @@ Aucun de ces blocages n'empêche le développement local ni les tests.
 1. **Vérifier la CI** : elle est verte sur `main` (`checks` + Playwright). En cas
    d'échec futur, lire les **annotations** du job (API GitHub publique), elles
    contiennent les lignes d'échec essentielles.
-2. **Demander à l'humain** les deux actions bloquantes :
-   - création des 4 enregistrements DNS A vers `45.155.171.57` ;
-   - `sudo bash infra/bootstrap/install-caddy-import.sh`.
-3. **Vérifier HTTPS** dès que le DNS répond :
+2. **Faire resynchroniser Caddy** (action humaine, idempotente) pour appliquer
+   la correction de routage : `sudo bash infra/bootstrap/install-caddy-import.sh`.
+   Chaque vhost web envoie désormais **tout** à Next.js ; c'est le relais
+   `/api/*` du web qui joint l'API interne.
+3. **Vérifier le routage public** :
    `curl -fsS https://api-staging-immo.noameunier.fr/health`,
-   puis la page `https://staging-immo.noameunier.fr/connexion`.
-   Les certificats sont émis au premier accès.
+   `curl -s -o /dev/null -w '%{http_code}\n' -X POST https://immo.noameunier.fr/api/auth/login -H 'content-type: application/json' -d '{"email":"x@y.z","password":"aaaaaaaaaaaa"}'`
+   (attendu : 400 de validation, plus jamais 404 `Cannot POST`), puis la page
+   `https://immo.noameunier.fr/connexion` et une connexion réelle.
 4. **Configurer Brevo** : renseigner `MAIL_PROVIDER=brevo` et `MAIL_API_KEY`
    dans `~/.secrets/immo-manager/staging-api.env`, puis
    `systemctl --user restart immo-staging-api`. Tester inscription,
@@ -270,6 +279,15 @@ immo-staging-api`) avant `pnpm test`, sinon le script refuse de démarrer —
 - **Vitest 5 / Vite 8** : ne jamais lire `error.stack` dans le `globalSetup`.
   Le formateur de piles de Vite plante (`code.charCodeAt is not a function`) et
   masque complètement la cause réelle. Imprimer `error.message` suffit.
+- **Ne jamais router `/api/*` directement vers l'API NestJS** dans Caddy :
+  l'API n'expose pas ce préfixe, la requête publique finit en
+  `Cannot POST /api/auth/login` (404) alors que l'API directe répond. Chaque
+  vhost web ne doit avoir qu'un upstream : le web Next.js (3100/3200), dont le
+  route handler retire `/api` et relaie vers `API_INTERNAL_URL`.
+- **Vhosts Caddy** : ne pas lier `/etc/caddy/immo.caddy` vers le dépôt.
+  `/home/dev` est en 700 : `caddy validate` (root) réussit mais le rechargement
+  échoue. Le script d'installation copie le fichier ; le relancer après chaque
+  modification (il est idempotent).
 - **Ne jamais lier un service à `0.0.0.0`** : toujours `127.0.0.1`, Caddy expose.
 
 ## 9. Comptes et données de démonstration
@@ -293,3 +311,5 @@ Le script `prisma/seed.ts` refuse de s'exécuter si `NODE_ENV=production`.
 | 26/10/2026 | Application web complète, seed, 2 tests Playwright                 |
 | 26/10/2026 | Application mobile Expo, documentation, infrastructure, CI         |
 | 26/10/2026 | CI verte : tests API, builds et parcours Playwright                |
+| 26/10/2026 | HTTPS public actif sur les 4 vhosts (DNS + Caddy branchés)         |
+| 27/10/2026 | Routage Caddy corrigé : tout `/api/*` passe par le relais Next.js  |

@@ -1,12 +1,14 @@
 # ---------------------------------------------------------------------------
 # Immo Manager — vhosts Caddy
 # ---------------------------------------------------------------------------
-# Ce fichier est la source de vérité versionnée. Il est lié symboliquement dans
+# Ce fichier est la source de vérité versionnée. Il est copié dans
 # /etc/caddy/immo.caddy par infra/bootstrap/install-caddy-import.sh (action
-# humaine unique, avec sudo). Ensuite, une mise à jour du fichier dans le dépôt
-# ne demande plus qu'un rechargement :
+# humaine, avec sudo) : /home/dev est en 700, l'utilisateur « caddy » ne peut
+# donc pas traverser le dépôt — un lien symbolique ferait échouer le service.
+# Après une modification du dépôt, relancer le script (idempotent :
+# il recopie le fichier puis recharge Caddy) :
 #
-#   sudo systemctl reload caddy
+#   sudo bash infra/bootstrap/install-caddy-import.sh
 #
 # Caddy valide la configuration avant tout rechargement ; un rechargement
 # invalide laisse l'ancienne configuration active.
@@ -15,14 +17,12 @@
 # ci-dessous pointent exclusivement vers 127.0.0.1.
 # ---------------------------------------------------------------------------
 
-# --- Préproduction web : page + API same-origin via /api/* -------------------
+# --- Préproduction web : page + API same-origin ------------------------------
+# Tout passe par Next.js, y compris /api/* : le route handler du web relaie vers
+# l'API interne en retirant le préfixe /api. Router /api/* directement vers
+# l'API renverrait « Cannot POST /api/... » (l'API n'expose pas ce préfixe).
 staging-immo.noameunier.fr {
 	encode zstd gzip
-
-	@api path /api/*
-	handle @api {
-		reverse_proxy 127.0.0.1:4200
-	}
 
 	handle {
 		reverse_proxy 127.0.0.1:3200
@@ -53,13 +53,9 @@ api-staging-immo.noameunier.fr {
 # --- Développement web (VPS) ------------------------------------------------
 # Ces deux vhosts peuvent être commentés si l'environnement de développement
 # n'a pas à être joignable depuis Internet.
+# Même principe qu'en préproduction : tout (y compris /api/*) va à Next.js.
 immo.noameunier.fr {
 	encode zstd gzip
-
-	@api path /api/*
-	handle @api {
-		reverse_proxy 127.0.0.1:4100
-	}
 
 	handle {
 		reverse_proxy 127.0.0.1:3100

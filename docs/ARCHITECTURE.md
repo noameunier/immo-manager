@@ -246,11 +246,16 @@ Les ports 4000, 5433, 8080, 1025 et 8025 appartiennent à un autre projet du VPS
 
 ```text
 Caddy (systemd, root)
- ├─ immo.noameunier.fr        → 127.0.0.1:3100, /api/* → 127.0.0.1:4100
+ ├─ immo.noameunier.fr        → 127.0.0.1:3100   (tout, /api/* inclus)
  ├─ api-immo.noameunier.fr    → 127.0.0.1:4100   (mobile)
- ├─ staging-immo.noameunier.fr→ 127.0.0.1:3200, /api/* → 127.0.0.1:4200
+ ├─ staging-immo.noameunier.fr→ 127.0.0.1:3200   (tout, /api/* inclus)
  └─ api-staging-immo…         → 127.0.0.1:4200
 ```
+
+- Chaque vhost web envoie **tout** à Next.js, y compris `/api/*`. C'est le route
+  handler du web qui relaie vers l'API interne en retirant le préfixe. Router
+  `/api/*` directement vers l'API renvoie `Cannot POST /api/...` : l'API n'expose
+  pas ce préfixe (erreur déjà rencontrée en préproduction).
 
 - Les vhosts sont versionnés dans `infra/caddy/immo.caddy` ; le script
   `infra/bootstrap/install-caddy-import.sh` (sudo, idempotent) copie le fichier

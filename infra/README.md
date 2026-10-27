@@ -32,6 +32,13 @@ infra/
 Les enregistrements DNS (A, TTL 300, sans Alias) sont créés **par un humain**
 chez le registrar. Ils ne sont pas automatisés.
 
+Les deux vhosts web (`immo…`, `staging-immo…`) envoient **tout** à Next.js,
+`/api/*` compris : le route handler du web relaie vers l'API interne
+(`API_INTERNAL_URL`) en retirant le préfixe. Ne jamais router `/api/*`
+directement vers l'API NestJS : elle n'expose pas ce préfixe et répond
+`Cannot POST /api/...`. Les vhosts `api-…` servent uniquement le client mobile,
+qui appelle l'API sans préfixe.
+
 Ports utilisés par d'autres projets du VPS : 4000, 5433, 8080, 1025, 8025.
 Ne jamais les réutiliser.
 
