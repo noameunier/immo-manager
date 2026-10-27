@@ -124,7 +124,7 @@ Modules : `auth`, `owner-entities`, `buildings`, `properties`, `dashboard`,
 - `README.md`, `AGENTS.md`, ce fichier, `CAHIER_DES_CHARGES.md`,
   `ARCHITECTURE.md`, `ROADMAP.md`, `infra/README.md`.
 - `infra/caddy/immo.caddy` (4 vhosts), `infra/bootstrap/install-caddy-import.sh`
-  (sudo, idempotent, lien symbolique), `install-user-services.sh`.
+  (sudo, idempotent, copie vers `/etc/caddy` puis rechargement), `install-user-services.sh`.
 - 4 unités systemd utilisateur (API/web, dev/préproduction), installées et
   actives sur le VPS, toutes liées à `127.0.0.1`.
 - `infra/docker/docker-compose.staging.yml` (PostgreSQL 5435).

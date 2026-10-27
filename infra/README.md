@@ -44,20 +44,22 @@ sudo bash infra/bootstrap/install-caddy-import.sh
 Le script :
 
 1. sauvegarde `/etc/caddy/Caddyfile` ;
-2. crée un lien `/etc/caddy/immo.caddy` → `infra/caddy/immo.caddy` ;
+2. copie `infra/caddy/immo.caddy` vers `/etc/caddy/immo.caddy` (mode 644) ;
 3. ajoute `import /etc/caddy/immo.caddy` (idempotent) ;
 4. valide la configuration, restaure en cas d'échec ;
 5. recharge Caddy.
 
-Après cette étape, **modifier un vhost ne demande plus que** :
+Après cette étape, **modifier un vhost** reprend le même script (idempotent) :
 
 ```bash
 # après édition de infra/caddy/immo.caddy
-sudo systemctl reload caddy
+sudo bash infra/bootstrap/install-caddy-import.sh
 ```
 
-Le lien symbolique évite toute copie manuelle et garantit que le fichier du
-dépôt est bien celui qui est servi.
+> Ne pas utiliser de lien symbolique vers le dépôt : `/home/dev` est en mode
+> 700 et le service Caddy tourne sous l'utilisateur `caddy`, qui ne peut pas y
+> entrer. `caddy validate` lancé en root réussirait, mais le rechargement
+> échouerait (`permission denied`). C'est pour cela que le fichier est copié.
 
 ## 3. Services applicatifs (sans sudo)
 

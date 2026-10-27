@@ -252,9 +252,11 @@ Caddy (systemd, root)
  └─ api-staging-immo…         → 127.0.0.1:4200
 ```
 
-- Les vhosts sont versionnés dans `infra/caddy/immo.caddy` ; l'import dans
-  `/etc/caddy/Caddyfile` est une action humaine unique (sudo), idempotente via
-  `infra/bootstrap/install-caddy-import.sh`.
+- Les vhosts sont versionnés dans `infra/caddy/immo.caddy` ; le script
+  `infra/bootstrap/install-caddy-import.sh` (sudo, idempotent) copie le fichier
+  vers `/etc/caddy/immo.caddy`, ajoute l'import et recharge Caddy. Une copie est
+  nécessaire : `/home/dev` est en mode 700, donc le service Caddy (utilisateur
+  `caddy`) ne peut pas lire un lien pointant dans le dépôt.
 - API et web tournent en services utilisateur (`systemd --user`), pas en root.
 - Les conteneurs de base de données restent sur `127.0.0.1`.
 

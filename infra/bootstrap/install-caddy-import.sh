@@ -8,12 +8,20 @@
 # Ce que fait le script :
 #   1. vérifie qu'il est lancé en root et que Caddy est installé ;
 #   2. sauvegarde /etc/caddy/Caddyfile ;
-#   3. crée un lien symbolique /etc/caddy/immo.caddy vers le fichier du dépôt,
-#      afin que les mises à jour futures ne demandent plus de sudo (hors reload) ;
+#   3. copie infra/caddy/immo.caddy vers /etc/caddy/immo.caddy ;
 #   4. ajoute une ligne `import immo.caddy` si elle n'existe pas déjà (idempotent) ;
 #   5. valide la configuration AVANT de recharger, et restaure la sauvegarde
 #      si la validation échoue ;
 #   6. recharge Caddy.
+#
+# Pourquoi une copie et non un lien symbolique : /home/dev est en mode 700 et
+# le service Caddy tourne sous l'utilisateur « caddy ». Il ne peut donc pas
+# traverser /home/dev : un lien vers le dépôt échoue au rechargement (alors que
+# `caddy validate`, lancé en root, réussit — piège déjà rencontré).
+#
+# Le dépôt reste la source de vérité : après modification de
+# infra/caddy/immo.caddy, relancer ce script (il est idempotent) pour recopier
+# le fichier et recharger Caddy.
 #
 # Ce script ne touche à aucun autre vhost (OpenCode, Pokero, etc.).
 # Il ne modifie ni le DNS, ni le pare-feu, ni systemd.
@@ -22,9 +30,9 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SOURCE_FILE="${REPO_DIR}/infra/caddy/immo.caddy"
-TARGET_LINK="/etc/caddy/immo.caddy"
+TARGET_FILE="/etc/caddy/immo.caddy"
 CADDYFILE="/etc/caddy/Caddyfile"
-IMPORT_LINE="import ${TARGET_LINK}"
+IMPORT_LINE="import ${TARGET_FILE}"
 
 if [[ ${EUID} -ne 0 ]]; then
   echo "ERREUR : ce script doit être lancé avec sudo." >&2
@@ -56,24 +64,14 @@ restore() {
   cp -a "${BACKUP}" "${CADDYFILE}"
 }
 
-# --- 2. Lien symbolique ----------------------------------------------------
-if [[ -L "${TARGET_LINK}" ]]; then
-  CURRENT="$(readlink -f "${TARGET_LINK}")"
-  if [[ "${CURRENT}" != "${SOURCE_FILE}" ]]; then
-    echo "Lien existant vers ${CURRENT} : remplacement par ${SOURCE_FILE}."
-    rm -f "${TARGET_LINK}"
-    ln -s "${SOURCE_FILE}" "${TARGET_LINK}"
-  else
-    echo "Lien ${TARGET_LINK} déjà correct."
-  fi
-elif [[ -e "${TARGET_LINK}" ]]; then
-  echo "ERREUR : ${TARGET_LINK} existe et n'est pas un lien symbolique." >&2
-  echo "Déplacez-le manuellement avant de relancer ce script." >&2
-  exit 1
-else
-  ln -s "${SOURCE_FILE}" "${TARGET_LINK}"
-  echo "Lien créé : ${TARGET_LINK} → ${SOURCE_FILE}"
+# --- 2. Copie des vhosts ---------------------------------------------------
+if [[ -L "${TARGET_FILE}" ]]; then
+  echo "Lien symbolique existant remplacé par une copie (illisible par l'utilisateur caddy)."
+  rm -f "${TARGET_FILE}"
 fi
+# 644 propriétaire root : lisible par le service, non modifiable par lui.
+install -m 644 -o root -g root "${SOURCE_FILE}" "${TARGET_FILE}"
+echo "Vhosts copiés : ${SOURCE_FILE} → ${TARGET_FILE}"
 
 # --- 3. Import idempotent --------------------------------------------------
 if grep -qF "${IMPORT_LINE}" "${CADDYFILE}"; then
@@ -101,6 +99,10 @@ fi
 echo "Rechargement de Caddy…"
 if ! systemctl reload caddy; then
   echo "Échec du rechargement : restauration." >&2
+  echo "Vérifier les droits de ${TARGET_FILE} et les journaux :" >&2
+  echo "  readlink -f ${TARGET_FILE}" >&2
+  echo "  systemctl status caddy" >&2
+  echo "  sudo journalctl -u caddy -n 50 --no-pager" >&2
   restore
   systemctl reload caddy || true
   exit 1
@@ -123,4 +125,7 @@ Prochaines étapes (humaines) :
        curl -s https://api-staging-immo.noameunier.fr/health
 
 Les certificats TLS sont émis automatiquement au premier accès.
+
+Après une modification de infra/caddy/immo.caddy, relancer ce script
+(idempotent) pour recopier le fichier et recharger Caddy.
 EOF
