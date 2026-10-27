@@ -172,6 +172,9 @@ de56a25  feat: relayer l'API à l'exécution et valider la préproduction
 d3b219d  fix: construire le web en mode production dans la CI
 57bf7d5  test: stabiliser le parcours Playwright et le diagnostic CI
 737e8e0  fix: copier les vhosts Caddy au lieu de les lier
+503d665  fix: accepter le préfixe /api dans l'API
+83284cf  docs: documenter la compatibilité /api et le réglage WEB_ORIGIN
+2589a46  feat: livrer les locataires et les baux
 ```
 
 Deux échecs de CI ont été diagnostiqués puis corrigés :
@@ -217,6 +220,7 @@ Deux échecs de CI ont été diagnostiqués puis corrigés :
 | Phase 2 — locataires et baux | 65 tests API + 27 tests partagés + 2 E2E, tous verts | 27/10/2026 |
 | Règles métier des baux | chevauchement refusé, dates validées, occupation synchronisée, isolation croisée | 27/10/2026 |
 | Préproduction avec jeu de démonstration | 2 locataires, 3 baux actifs, 2 380 €/mois, pages baux et locataires en 200 | 27/10/2026 |
+| GitHub Actions `main` (`2589a46`) | job `checks` vert (lint, types, 65 tests, builds) et job Playwright vert (2 tests) | 27/10/2026 |
 Ce qui **n'a pas** été vérifié : envoi d'email réel via Brevo, application mobile
 sur appareil physique, sauvegarde distante (remote rclone non configuré), rendu
 visuel dans un navigateur réel (les parcours ont été validés en HTTP et par
@@ -359,3 +363,4 @@ Le script `prisma/seed.ts` refuse de s'exécuter si `NODE_ENV=production`.
 | 27/10/2026 | Parcours préproduction validé en HTTPS (inscription → tableau)     |
 | 27/10/2026 | Phase 2 : locataires et baux livrés, 65 tests API, E2E étendu      |
 | 27/10/2026 | Préproduction migrée et peuplée : 2 locataires, 3 baux actifs      |
+| 27/10/2026 | CI verte sur la phase 2 (65 tests API, E2E étendu)                 |
